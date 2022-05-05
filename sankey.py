@@ -100,23 +100,57 @@ def draw_circular_sankey(df, title_text="Sankey Diagram"):
             nodes[node] = c
             c += 1
 
-        cmap = plt.cm.get_cmap('Spectral')
-        color_map = dict()
-        start_nodes = list(df['colour'].drop_duplicates())
-        step = 1.0 / len(start_nodes)
-        node_colors = []
-        for i in range(len(start_nodes)):
-            rgba = cmap(i * step)
-            rgba = tuple(int((255 * x)) for x in rgba[0:3]) + (0.5,)
-            rgba = 'rgba' + str(rgba)
-            color_map[start_nodes[i]] = rgba
-            node_colors.append(rgba)
+        # POSITIONS
+        source_nodes = list(set(df['source']))
+        source_nodes.sort()
+        target_nodes = [x for x in set(df['target']) if x not in source_nodes]
+        target_nodes.sort()
+        all_nodes = list(set([x[0] for x in source_nodes + target_nodes]))
+        all_nodes.sort()
+        # print(all_nodes)
+        step = 0.8 / len(all_nodes)
 
-        start_nodes = list(df['colour'].drop_duplicates())
-        node_colors = []
-        for i in range(len(start_nodes)):
-            rgba = color_map[start_nodes[i]]
-            node_colors.append(rgba)
+        # list of consistent y positions since x position is fixed per column
+        y_pos = dict()
+        y = 0.1
+        for nd in all_nodes:
+            y_pos[nd] = y
+            y += step
+
+        snodes = dict()
+        tnodes = dict()
+        x = 0.1
+        for nd in source_nodes:
+            y = y_pos[nd[0]]
+            snodes[nd] = (x, y)
+            # print(nd, y)
+        x = 0.9
+        for nd in target_nodes:
+            y = y_pos[nd[0]]
+            tnodes[nd] = (x, y)
+            # print(nd, y)
+
+        snodes.update(tnodes)
+        positions = snodes
+
+        # RANDOM COLOURS
+        # cmap = plt.cm.get_cmap('Spectral')
+        # color_map = dict()
+        # start_nodes = list(df['colour'].drop_duplicates())
+        # step = 1.0 / len(start_nodes)
+        # node_colors = []
+        # for i in range(len(start_nodes)):
+        #     rgba = cmap(i * step)
+        #     rgba = tuple(int((255 * x)) for x in rgba[0:3]) + (0.5,)
+        #     rgba = 'rgba' + str(rgba)
+        #     color_map[start_nodes[i]] = rgba
+        #     node_colors.append(rgba)
+        #
+        # start_nodes = list(df['colour'].drop_duplicates())
+        # node_colors = []
+        # for i in range(len(start_nodes)):
+        #     rgba = color_map[start_nodes[i]]
+        #     node_colors.append(rgba)
 
         # print(start_nodes)
         # print(color_map)
@@ -126,6 +160,8 @@ def draw_circular_sankey(df, title_text="Sankey Diagram"):
         values = []
         colors = []
         labels = []
+        x = []
+        y = []
         for index, row in df.iterrows():
             sources.append(nodes[row['source']])
             targets.append(nodes[row['target']])
@@ -133,12 +169,23 @@ def draw_circular_sankey(df, title_text="Sankey Diagram"):
             colors.append(row['colour'])
             labels.append(row['tag'])
 
+        node_labels = list(nodes.keys())
+        for nl in node_labels:
+            x.append(positions[nl][0])
+            y.append(positions[nl][1])
+        print(node_labels)
+        print(x)
+        print(y)
+
         fig = go.Figure(data=[go.Sankey(
+                              arrangement = 'fixed',
                               # Define nodes
-                              node=dict(pad=100,
+                              node=dict(pad=10,
                                         thickness=15,
                                         line=dict(color="black", width=0.01),
-                                        label=list(nodes.keys()),
+                                        label=node_labels,
+                                        x=x,
+                                        y=y,
                                         # color=node_colors
                                         color="black"
                                         ),
@@ -151,10 +198,10 @@ def draw_circular_sankey(df, title_text="Sankey Diagram"):
                                         ))])
 
         fig.update_layout(title_text=title_text,
-                          font=dict(size = 12, color = 'white', family = "Arial"),
+                          font=dict(size = 12, color = 'black', family = "Arial"),
 
-                          plot_bgcolor='#F2F2F3',  # off white
-                          paper_bgcolor='#F2F2F3',  # off white
+                          # plot_bgcolor='#F2F2F3',  # off white
+                          # paper_bgcolor='#F2F2F3',  # off white
                           # plot_bgcolor='#262626',  # black of the maps
                           # paper_bgcolor='#262626'  # black of the maps
                           # plot_bgcolor='#070D22',  # website blue

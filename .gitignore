@@ -3,3 +3,5 @@ Private_data/
 venv
 __pycache__
 full_logs.log
+.DS_Store
+.xlsx
