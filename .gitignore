@@ -5,3 +5,4 @@ __pycache__
 full_logs.log
 .DS_Store
 .xlsx
+mowl/ontologies/

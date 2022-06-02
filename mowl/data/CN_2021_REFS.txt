@@ -1,0 +1,12 @@
+Combined Nomenclature, 2021
+https://ec.europa.eu/eurostat/ramon/nomenclatures/index.cfm?TargetUrl=LST_NOM_DTL&StrNom=CN_2021&StrLanguageCode=EN
+
+Gecombineerde Nomenclatuur, 2021 (GN 2021)
+https://ec.europa.eu/eurostat/ramon/nomenclatures/index.cfm?TargetUrl=LST_NOM_DTL&StrNom=CN_2021&StrLanguageCode=NL
+
+Kombinierte Nomenklatur, 2021 (KN 2021)
+https://ec.europa.eu/eurostat/ramon/nomenclatures/index.cfm?TargetUrl=LST_CLS_DLD&StrNom=CN_2021&StrLanguageCode=DE
+
+Nomenclature combinée, 2021 (NC 2021)
+https://ec.europa.eu/eurostat/ramon/nomenclatures/index.cfm?TargetUrl=LST_CLS_DLD&StrNom=CN_2021&StrLanguageCode=FR
+
