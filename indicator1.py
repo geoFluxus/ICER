@@ -43,14 +43,16 @@ relevant_cols = ['Provincie',
                  'Uitvoer_nationaal',
                  'Uitvoer_internationaal']
 
-lokale_winning = ['Land- en tuinbouwproducten',
-                  'Bosbouwproducten',
-                  'Cokes en aardolieproducten',
-                  'Steenkool, bruinkool, aardgas en ruwe aardolie',
-                  'Ertsen',
-                  'Zout, zand, grind, klei']
+lokale_winning_cols = ['Land- en tuinbouwproducten',
+                       'Bosbouwproducten',
+                       'Cokes en aardolieproducten',
+                       'Steenkool, bruinkool, aardgas en ruwe aardolie',
+                       'Ertsen',
+                       'Zout, zand, grind, klei']
 
 abiotic_dmcs = pd.DataFrame()
+abiotic_dmis = pd.DataFrame()
+all_data = pd.DataFrame()
 
 for sheet in years.keys():
 
@@ -66,96 +68,68 @@ for sheet in years.keys():
 
     # Lokale winning
 
-    lokale_winning = data[data['Goederengroep'].isin(lokale_winning)]
+    lokale_winning = data[data['Goederengroep'].isin(lokale_winning_cols)].copy(deep=True)
     lokale_winning['Winning'] = lokale_winning['Uitvoer_nationaal'] + lokale_winning['Uitvoer_internationaal'] + lokale_winning['Aanbod']
     lokale_winning = lokale_winning[['Provincie', 'Goederengroep', 'Winning']]
 
     data = pd.merge(data, lokale_winning, how='left', on=['Provincie', 'Goederengroep'])
     data.fillna(0, inplace=True)
-    #
-    # groups = data[['Goederengroep']].drop_duplicates()
-    # groups['cbs'] = groups.index
-    # groups['cbs'] = groups['cbs'].apply(lambda x: str(x).zfill(2))
-    #
-    # data = data.merge(groups, how='left', on='Goederengroep')
-
 
     # read division into biotic / abiotic resources
-    # materials = pd.read_csv(filepath + 'ontology/cbs_materials.csv', delimiter=';')
     resource = pd.read_csv('Private_data/cbs_biotic_abiotic.csv', delimiter=';')
 
-    # # biotic materials
-    # biotic = materials[materials['materials'].str.contains('BiotischMateriaal')]
-    #
-    # # abiotic materials
-    # abiotic = materials[materials['materials'].str.contains('AbiotischMateriaal')]
-    #
-    # # mixed materials
-    # mixed_known = materials[materials.index.isin(biotic.index) & materials.index.isin(abiotic.index)]
-    # mixed_unknown = materials[~materials.index.isin(biotic.index) & ~materials.index.isin(abiotic.index)]
-    # mixed = mixed_known.append(mixed_unknown)
-    #
-    # # filter overlap
-    # biotic = biotic[~biotic.index.isin(mixed.index)]
-    # abiotic = abiotic[~abiotic.index.isin(mixed.index)]
-    #
-    # # concatenate
-    #
-    # biotic['resource'] = 'biotic'
-    # abiotic['resource'] = 'abiotic'
-    # mixed['resource'] = 'mixed'
-    #
-    # resource = pd.concat([biotic, abiotic, mixed])
-
-    print(data.columns, resource.columns)
     data = data.merge(resource, on='Goederengroep')
 
-    # if True:
-    #     # filter out only abiotic
-    #     abiotic = data[data['resource'] == 'abiotic']
-    #
-    #     # TO DO -> add some ratio to mixed categories and include them in the calculation
-    #     abiotic_in_mixed = data[data['resource'] == 'mixed']
-    #     abiotic_in_mixed = abiotic_in_mixed.apply(lambda x: x * 0.5 if x.dtype == 'float64' else x)
-    #
-    #     all_abiotic = pd.concat([abiotic, abiotic_in_mixed])
-    #
-    #     aggregated = all_abiotic.groupby(['Provincie']).sum().reset_index()
-    # else:
-    #     aggregated = data.groupby(['Provincie']).sum().reset_index()
+    # filter out only abiotic
+    if False:
+        abiotic = data[data['resource'] == 'abiotic']
 
-    aggregated = data.groupby(['Provincie', 'resource']).sum().reset_index()
-    # aggregated = data.groupby(['Provincie']).sum().reset_index()
-    # aggregated = data.copy()
+        # TO DO -> add some ratio to mixed categories and include them in the calculation
+        abiotic_in_mixed = data[data['resource'] == 'mixed']
+        abiotic_in_mixed = abiotic_in_mixed.apply(lambda x: x * 0.5 if x.dtype == 'float64' else x)
+
+        all_abiotic = pd.concat([abiotic, abiotic_in_mixed])
+
+        aggregated = all_abiotic.groupby(['Provincie']).sum().reset_index()
+
+    # aggregate per resource type biotic/abiotic/mixed
+    elif False:
+        aggregated = data.groupby(['Provincie', 'resource']).sum().reset_index()
+
+    # aggregated per province
+    elif False:
+        aggregated = data.groupby(['Provincie']).sum().reset_index()
+
+    # not aggregated at all
+    else:
+        aggregated = data.copy()
 
     aggregated['DMI'] = aggregated['Winning'] + aggregated['Invoer_nationaal'] + aggregated['Invoer_internationaal']
     aggregated['DMC'] = aggregated['DMI'] - aggregated['Uitvoer_nationaal'] - aggregated['Uitvoer_internationaal']
 
-    print(aggregated)
-    aggregated.to_excel('Private_data/test.xlsx')
-
-    break
-if False:
+    aggregated['year'] = years[sheet]
+    # print(aggregated)
+    # aggregated.to_excel('Private_data/test.xlsx')
 
 
-
-
-    dmc = data.groupby(['Provincie'])['DMC'].sum().reset_index()
-    dmc['year'] = years[sheet]
+    dmc = aggregated[['Provincie', 'DMC', 'year']].copy(deep=True)
+    dmi = aggregated[['Provincie', 'DMI', 'year']].copy(deep=True)
 
     abiotic_dmcs = abiotic_dmcs.append(dmc)
+    abiotic_dmis = abiotic_dmis.append(dmi)
+    all_data = all_data.append(aggregated)
+    # print(dmc)
+    # break
 
 
+# print(abiotic_dmcs)
+# abiotic_dmcs.to_excel('Private_data/abiotic_dmcs.xlsx')
+all_data.to_excel('Private_data/all_data.xlsx')
+
+# draw visualisation
 if False:
-    # abiotic_dmcs.set_index('year', inplace=True)
-    print(abiotic_dmcs)
-
-
-    # fig = sns.lmplot(x='year', y='DMC', hue='Provincie', data=abiotic_dmcs, truncate=False)
-    # fig.set(xlim=(2015, 2050))
-
     sns.set()
-    fig = sns.FacetGrid(data=abiotic_dmcs, hue='Provincie') #, aspect=0.5, height=5)
+    fig = sns.FacetGrid(data=abiotic_dmcs, col='Provincie', hue='Provincie', aspect=0.5, height=5, col_wrap=6)
     fig.set(xlim=(2015, 2030))
 
     fig.map(sns.regplot, "year", "DMC", truncate=False)
@@ -163,4 +137,55 @@ if False:
 
     plt.show()
 
-# plt.savefig('indicator1.svg')
+    # plt.savefig('indicator1.svg')
+
+
+# ############### DEEPER ANALYSIS #################
+
+province = 'Zuid-Holland'
+value = 'DMC'
+
+prov_data = all_data[all_data['Provincie'] == province]
+
+# all product groups plotted
+product_data = prov_data[['Goederengroep', value, 'year']]
+product_data.columns = ['GG', 'val', 'year']
+
+# visualisation
+if True:
+    sns.set()
+    fig = sns.FacetGrid(data=product_data, col='GG', hue='GG', col_wrap=8)
+    fig.set(xlim=(2015, 2020))
+
+    fig.map(sns.regplot, "year", "val", truncate=False)
+    # fig.add_legend()
+
+    plt.show()
+
+
+product = 'Steenkool, bruinkool, aardgas en ruwe aardolie'
+# all trade measures plotted
+
+trade_data = prov_data[prov_data['Goederengroep'] == product]
+
+trade_data = trade_data.melt(id_vars=['year'], value_vars=['Invoer_nationaal',
+                                                           'Invoer_internationaal',
+                                                           'Aanbod',
+                                                           'Uitvoer_nationaal',
+                                                           'Uitvoer_internationaal',
+                                                           'Winning',
+                                                           'DMI',
+                                                           'DMC'])
+
+print(trade_data)
+
+# visualisation
+if False:
+    sns.set()
+    fig = sns.FacetGrid(data=trade_data, col='variable', hue='variable', col_wrap=8)
+    fig.set(xlim=(2015, 2020))
+
+    fig.map(sns.regplot, "year", "value", truncate=False)
+    # fig.add_legend()
+
+    plt.show()
