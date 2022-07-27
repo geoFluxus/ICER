@@ -50,8 +50,18 @@ lokale_winning_cols = ['Land- en tuinbouwproducten',
                        'Ertsen',
                        'Zout, zand, grind, klei']
 
-abiotic_dmcs = pd.DataFrame()
-abiotic_dmis = pd.DataFrame()
+
+# goal = 'dmc_abiotic'
+# goal = 'dmi_abiotic'
+# goal = 'all_per_type'
+# goal = 'all_per_province'
+# goal = 'all'
+# goal = 'dmc_all'
+goal = 'dmi_all'
+
+
+dmcs = pd.DataFrame()
+dmis = pd.DataFrame()
 all_data = pd.DataFrame()
 
 for sheet in years.keys():
@@ -81,7 +91,7 @@ for sheet in years.keys():
     data = data.merge(resource, on='Goederengroep')
 
     # filter out only abiotic
-    if False:
+    if 'abiotic' in goal:
         abiotic = data[data['resource'] == 'abiotic']
 
         # TO DO -> add some ratio to mixed categories and include them in the calculation
@@ -93,11 +103,11 @@ for sheet in years.keys():
         aggregated = all_abiotic.groupby(['Provincie']).sum().reset_index()
 
     # aggregate per resource type biotic/abiotic/mixed
-    elif False:
+    elif goal == 'all_per_type':
         aggregated = data.groupby(['Provincie', 'resource']).sum().reset_index()
 
     # aggregated per province
-    elif False:
+    elif goal == 'all_per_province':
         aggregated = data.groupby(['Provincie']).sum().reset_index()
 
     # not aggregated at all
@@ -111,81 +121,97 @@ for sheet in years.keys():
     # print(aggregated)
     # aggregated.to_excel('Private_data/test.xlsx')
 
-
     dmc = aggregated[['Provincie', 'DMC', 'year']].copy(deep=True)
     dmi = aggregated[['Provincie', 'DMI', 'year']].copy(deep=True)
 
-    abiotic_dmcs = abiotic_dmcs.append(dmc)
-    abiotic_dmis = abiotic_dmis.append(dmi)
+    dmcs = dmcs.append(dmc)
+    dmis = dmis.append(dmi)
     all_data = all_data.append(aggregated)
     # print(dmc)
     # break
 
 
-# print(abiotic_dmcs)
-# abiotic_dmcs.to_excel('Private_data/abiotic_dmcs.xlsx')
-all_data.to_excel('Private_data/all_data.xlsx')
+if 'dmi' in goal:
+    dmis.to_excel(f'Private_data/{goal}.xlsx')
+if 'dmc' in goal:
+    dmcs.to_excel(f'Private_data/{goal}.xlsx')
+if 'all' in goal:
+    all_data.to_excel('Private_data/aggregated_product_data.xlsx')
+
+# print(all_data)
 
 # draw visualisation
-if False:
-    sns.set()
-    fig = sns.FacetGrid(data=abiotic_dmcs, col='Provincie', hue='Provincie', aspect=0.5, height=5, col_wrap=6)
-    fig.set(xlim=(2015, 2030))
+if 'dmi' in goal:
+    viz_data = dmis
+    val = 'DMI'
+elif 'dmc' in goal:
+    viz_data = dmcs
+    val = 'DMC'
 
-    fig.map(sns.regplot, "year", "DMC", truncate=False)
+print(viz_data)
+viz_data = viz_data.groupby(['Provincie', 'year']).sum().reset_index()
+print(viz_data)
+
+if True:
+    sns.set()
+    fig = sns.FacetGrid(data=viz_data, col='Provincie', hue='Provincie', aspect=0.5, height=5, col_wrap=6)
+    fig.set(xlim=(2015, 2030)) #, ylim=(0,80000))
+
+    fig.map(sns.regplot, "year", val, truncate=False)
     # fig.add_legend()
 
-    plt.show()
+    # plt.show()
 
-    # plt.savefig('indicator1.svg')
+    # plt.savefig('Private_data/images/dmc_abiotic.svg')
+    plt.savefig(f'Private_data/images/{goal}.png')
 
 
 # ############### DEEPER ANALYSIS #################
 
-province = 'Zuid-Holland'
-value = 'DMC'
+# province = 'Zuid-Holland'
+# value = 'DMC'
+#
+# prov_data = all_data[all_data['Provincie'] == province]
+#
+# # all product groups plotted
+# product_data = prov_data[['Goederengroep', value, 'year']]
+# product_data.columns = ['GG', 'val', 'year']
 
-prov_data = all_data[all_data['Provincie'] == province]
+# # visualisation
+# if False:
+#     sns.set()
+#     fig = sns.FacetGrid(data=product_data, col='GG', hue='GG', col_wrap=8)
+#     fig.set(xlim=(2015, 2020))
+#
+#     fig.map(sns.regplot, "year", "val", truncate=False)
+#     # fig.add_legend()
+#
+#     plt.show()
+#
 
-# all product groups plotted
-product_data = prov_data[['Goederengroep', value, 'year']]
-product_data.columns = ['GG', 'val', 'year']
-
-# visualisation
-if True:
-    sns.set()
-    fig = sns.FacetGrid(data=product_data, col='GG', hue='GG', col_wrap=8)
-    fig.set(xlim=(2015, 2020))
-
-    fig.map(sns.regplot, "year", "val", truncate=False)
-    # fig.add_legend()
-
-    plt.show()
-
-
-product = 'Steenkool, bruinkool, aardgas en ruwe aardolie'
-# all trade measures plotted
-
-trade_data = prov_data[prov_data['Goederengroep'] == product]
-
-trade_data = trade_data.melt(id_vars=['year'], value_vars=['Invoer_nationaal',
-                                                           'Invoer_internationaal',
-                                                           'Aanbod',
-                                                           'Uitvoer_nationaal',
-                                                           'Uitvoer_internationaal',
-                                                           'Winning',
-                                                           'DMI',
-                                                           'DMC'])
-
-print(trade_data)
-
-# visualisation
-if False:
-    sns.set()
-    fig = sns.FacetGrid(data=trade_data, col='variable', hue='variable', col_wrap=8)
-    fig.set(xlim=(2015, 2020))
-
-    fig.map(sns.regplot, "year", "value", truncate=False)
-    # fig.add_legend()
-
-    plt.show()
+# product = 'Steenkool, bruinkool, aardgas en ruwe aardolie'
+# # all trade measures plotted
+#
+# trade_data = prov_data[prov_data['Goederengroep'] == product]
+#
+# trade_data = trade_data.melt(id_vars=['year'], value_vars=['Invoer_nationaal',
+#                                                            'Invoer_internationaal',
+#                                                            'Aanbod',
+#                                                            'Uitvoer_nationaal',
+#                                                            'Uitvoer_internationaal',
+#                                                            'Winning',
+#                                                            'DMI',
+#                                                            'DMC'])
+#
+# print(trade_data)
+#
+# # visualisation
+# if False:
+#     sns.set()
+#     fig = sns.FacetGrid(data=trade_data, col='variable', hue='variable', col_wrap=8)
+#     fig.set(xlim=(2015, 2020))
+#
+#     fig.map(sns.regplot, "year", "value", truncate=False)
+#     # fig.add_legend()
+#
+    # plt.show()
