@@ -3,6 +3,7 @@ import pandas as pd
 import geopandas as gpd
 import styles
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 
 
 def format_label(value, tick):
@@ -21,23 +22,85 @@ plt.rcParams.update(styles.params)
 # INDICATOR 2
 # ______________________________________________________________________________
 
-filename = 'Indicator2'
-sheet = 'All'
-# sheet = 'Abiotisch'
-# sheet = 'Biotisch'
-# sheet = 'Gemengd'
+filename = '_ALL_TREATMENTS_PERCODE_PER_PROVINCE_'
 
-potential = pd.read_excel(f'{filename}.xlsx', sheet_name=sheet)
+all_data = pd.read_excel(f'Private_data/{filename}.xlsx', sheet_name='Result 1')
 
-potential.loc[potential['current_rank'] == 'I', 'alt_rank'] = 'I'
+rladder = pd.read_excel('Private_data/R-ladder.xlsx', sheet_name='R-ladder')
+rladder = rladder[['R-rate', 'code']]
+restrictions = pd.read_excel('Private_data/R-ladder.xlsx', sheet_name='Restrictions')
+restrictions = restrictions[['code', 'exception']]
 
-potential = pd.merge(potential, colors, left_on="alt_rank", right_index=True)
-potential['tag'] = potential['current_rank'] + "->" + potential["alt_rank"]
+# connect to r-ladder
+
+all_data = pd.merge(all_data, rladder, how='left')
+
+potential = all_data[['code', 'ewc_code', 'R-rate']].copy()
+potential.drop_duplicates(inplace=True)
+
+potential = pd.merge(potential, potential, on='ewc_code')
+potential.columns = ['code_current', 'ewc_code', 'R-rate_current', 'code_alt', 'R-rate_alt']
+
+# filter out potential with lower R-rate
+potential = potential[potential['R-rate_current'].str[0] > potential['R-rate_alt'].str[0]]
+
+# filter out potential for group 'I'
+potential = potential[potential['R-rate_current'].str[0] != 'I']
+
+# filter out exceptions
+potential = pd.merge(potential, restrictions, how='left', left_on=['code_current', 'code_alt'], right_on=['code', 'exception'])
+potential = potential[potential['exception'].isna()]
+potential.drop(columns=['code', 'exception'], inplace=True)
+
+# select the best alternative per ewc per processing method
+alternative = potential.groupby(['code_current', 'ewc_code', 'R-rate_current'])['R-rate_alt'].agg('max').reset_index()
+alternative = pd.merge(alternative, rladder, how='left', left_on='R-rate_alt', right_on='R-rate')
+alternative.rename(columns={'code': 'code_alt'}, inplace=True)
+alternative.drop(columns=['R-rate'], inplace=True)
+
+# print(alternative)
+
+# connect alternative treatment methods to all data
+
+all_data = pd.merge(all_data, alternative, left_on=['code', 'ewc_code'], right_on=['code_current', 'ewc_code'], how='left')
+# print(all_data)
+
+# export results for validation
+all_data.to_excel('Private_data/Indicator2_results.xlsx')
+
+viz_data = all_data[['province', 'sum', 'R-rate', 'R-rate_alt']]
+viz_data['R-rate'] = viz_data['R-rate'].str[0]
+viz_data['R-rate_alt'] = viz_data['R-rate_alt'].str[0]
+
+viz_data.loc[viz_data['R-rate_alt'].isna(), 'R-rate_alt'] = viz_data['R-rate']
+
+
+# aggregate separate ewc_does
+viz_data = viz_data.groupby(['province', 'R-rate', 'R-rate_alt'])['sum'].sum().reset_index()
+
+viz_data.columns = ['province', 'current_rank', 'alt_rank', 'amount']
+
+
+# filename = 'Indicator2'
+# sheet = 'All'
+# # sheet = 'Abiotisch'
+# # sheet = 'Biotisch'
+# # sheet = 'Gemengd'
+#
+# potential = pd.read_excel(f'{filename}.xlsx', sheet_name=sheet)
+#
+
+
+viz_data = pd.merge(viz_data, colors, left_on="alt_rank", right_index=True, how='left')
+viz_data['tag'] = viz_data['current_rank'] + "->" + viz_data["alt_rank"]
+
+
+print(viz_data)
 
 # SANKEY VIZ
 if False:
-    potential.loc[potential['current_rank'] != potential['alt_rank'], 'alt_rank'] = potential['alt_rank'] + '.'
-    # print(potential)
+    viz_data.loc[viz_data['current_rank'] != viz_data['alt_rank'], 'alt_rank'] = viz_data['alt_rank'] + '.'
+    # print(viz_data)
 
     # open province shapefile
     prov_areas = gpd.read_file('Spatial_data/provincies.shp')
@@ -45,11 +108,11 @@ if False:
     prov_areas['indic'] = 0
 
     # CALCULATE INDICATOR PER PROVINCE
-    provinces = list(potential['province'].drop_duplicates())
+    provinces = list(viz_data['province'].drop_duplicates())
 
     for province in provinces:
 
-        data = potential[potential['province'] == province]
+        data = viz_data[viz_data['province'] == province]
         total = data['amount'].sum()
         alternative = data[data['current_rank'] != data['alt_rank']]['amount'].sum()
 
@@ -59,7 +122,7 @@ if False:
         prov_areas.loc[prov_areas['name'] == province, 'total'] = total
         prov_areas.loc[prov_areas['name'] == province, 'indic'] = indicator
 
-        title = f'{province} {sheet} {indicator}%'
+        title = f'{province} {indicator}%'
 
         data.rename(columns={'current_rank': 'source', 'alt_rank': 'target'}, inplace=True)
         data = data[data.columns[1:]]
@@ -67,15 +130,15 @@ if False:
         print(data)
         # sankey.draw_circular_sankey(data, title_text=title)
 
-    # prov_areas.to_file(f'Spatial_data/indicators_per_province_{sheet}.shp')
+    prov_areas.to_file(f'Spatial_data/indicators_per_province.shp')
 
 # BARCHART VIZ
-if True:
-    provinces = list(potential['province'].drop_duplicates())
+if False:
+    provinces = list(viz_data['province'].drop_duplicates())
 
     for province in provinces:
 
-        data = potential[potential['province'] == province]
+        data = viz_data[viz_data['province'] == province]
         total = data['amount'].sum()
         alternative = data[data['current_rank'] != data['alt_rank']]['amount'].sum()
 
@@ -109,3 +172,43 @@ if True:
         plt.savefig(f'Private_data/images/{province}_indicator1.svg')
 
         # break
+
+
+# PARALLEL PLOTS VIZ
+if True:
+    # viz_data.loc[viz_data['current_rank'] != viz_data['alt_rank'], 'alt_rank'] = viz_data['alt_rank'] + '.'
+    # print(viz_data)
+
+    # CALCULATE INDICATOR PER PROVINCE
+    provinces = list(viz_data['province'].drop_duplicates())
+
+    for province in provinces:
+
+        data = viz_data[viz_data['province'] == province]
+        total = data['amount'].sum()
+        alternative = data[data['current_rank'] != data['alt_rank']]['amount'].sum()
+
+        indicator = round(alternative / total * 100, 2)
+        print(province, indicator)
+
+        # create dimensions
+        current_rank_dim = go.parcats.Dimension(values=data.current_rank,
+                                                categoryorder='category ascending',
+                                                label='current rank')
+        alt_rank_dim = go.parcats.Dimension(values=data.alt_rank,
+                                            categoryorder='category ascending',
+                                            label='alternative rank')
+        color = data.colour
+        # colorscale = colors
+
+        fig = go.Figure(data=[go.Parcats(dimensions=[current_rank_dim, alt_rank_dim],
+                                         line={'color': color, 'shape': 'hspline'},
+                                         counts=data.amount,
+                                         arrangement='freeform',
+                                         sortpaths='backward')])
+
+        fig.show()
+
+        data.to_excel(f'{province}_ind2.xlsx')
+
+        break

@@ -101,3 +101,23 @@ and R.r_code <> 'I'
 --     and w.materials like '%BiotischMateriaal%' and w.materials not like '%AbiotischMateriaal%'-- Biotic
     and (w.materials not like '%iotischMateriaal%' or (w.materials like '%AbiotischMateriaal%' and w.materials like '%BiotischMateriaal%')) -- Mixed
 group by a.geom, R.r_code;
+
+
+--- ALL TREATMENTS PER EWC CODE PER PROVINCE ---
+
+select sum(amount), p.code, w.ewc_code, provinces.province from asmfa_flowchain fn
+    left join asmfa_flow f on fn.id = f.flowchain_id
+    left join asmfa_actor dest on f.destination_id = dest.id
+    left join asmfa_actor orig on f.origin_id = orig.id
+    left join asmfa_process p on dest.process_id = p.id
+    left join asmfa_waste06 w on fn.waste06_id = w.id
+    right join
+    (select actor.id, area.name province from asmfa_actor actor, asmfa_area area
+        where area.adminlevel_id = 8
+        and st_contains(area.geom, actor.geom)) provinces
+        on orig.id = provinces.id
+where fn.dataset_id = 2
+--                 and w.materials like '%AbiotischMateriaal%' and w.materials not like '%BiotischMateriaal%'-- Abiotic
+--                 and w.materials like '%BiotischMateriaal%' and w.materials not like '%AbiotischMateriaal%'-- Biotic
+--                 and (w.materials not like '%iotischMateriaal%' or (w.materials like '%AbiotischMateriaal%' and w.materials like '%BiotischMateriaal%')) -- Mixed
+group by p.code, w.ewc_code, provinces.province;
