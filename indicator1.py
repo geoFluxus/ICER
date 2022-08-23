@@ -2,7 +2,87 @@ import pandas as pd
 import styles
 import matplotlib.pyplot as plt
 import seaborn as sns
+from seaborn.regression import _RegressionPlotter
 sns.set_theme(color_codes=True)
+
+
+# REGRESSION ANALYSIS
+def regression(func, *args, **kwargs):
+    # If color was a keyword argument, grab it here
+    kw_color = kwargs.pop("color", None)
+
+    # How we use the function depends on where it comes from
+    func_module = str(getattr(func, "__module__", ""))
+
+    # Iterate over the data subsets
+    df = []
+    for (row_i, col_j, hue_k), data_ijk in fig.facet_data():
+
+        # If this subset is null, move on
+        if not data_ijk.values.size:
+            continue
+
+        # print(fig.grid)
+
+        # Get the current axis
+        modify_state = not func_module.startswith("seaborn")
+        ax = fig.facet_axis(row_i, col_j, modify_state)
+
+        # Decide what color to plot with
+        kwargs["color"] = fig._facet_color(hue_k, kw_color)
+
+        # Insert the other hue aesthetics if appropriate
+        for kw, val_list in fig.hue_kws.items():
+            kwargs[kw] = val_list[hue_k]
+
+        # Insert a label in the keyword arguments for the legend
+        if fig._hue_var is not None:
+            kwargs["label"] = fig.hue_names[hue_k]
+
+        # Get the actual data we are going to plot with
+        plot_data = data_ijk[list(args)]
+        if fig._dropna:
+            plot_data = plot_data.dropna()
+        plot_args = [v for k, v in plot_data.iteritems()]
+
+        # Some matplotlib functions don't handle pandas objects correctly
+        if func_module.startswith("matplotlib"):
+            plot_args = [v.values for v in plot_args]
+
+        # Draw the plot
+        if str(func.__module__).startswith("seaborn"):
+            plot_kwargs = kwargs.copy()
+            semantics = ["x", "y", "hue", "size", "style"]
+            for key, val in zip(semantics, plot_args):
+                plot_kwargs[key] = val
+            plot_args = []
+
+        # regression
+        plotter = _RegressionPlotter(*plot_args, **plot_kwargs)
+        grid, yhat, err_bands = plotter.fit_regression(ax)
+        label = plot_kwargs['label']
+        goal = data_ijk['DMI'].to_list()[0]
+        projected_value = yhat[-1]
+
+        # bounds
+        lb_0 = [err_bands[0].min(), err_bands[1].min()]
+        lb_1 = [err_bands[0].max(), err_bands[1].max()]
+        bounds = lb_0
+        if lb_1[0] < projected_value < lb_1[1]:
+            bounds = lb_1
+
+        # export result
+        d = {
+            'label': [label],
+            'lower_bound': [bounds[0]],
+            'upper_bound': [bounds[1]],
+            'projected_value': [projected_value],
+            'goal': [goal]
+        }
+        df.append(pd.DataFrame(data=d))
+
+    return pd.concat(df).reset_index(drop=True)
+
 
 filepath = '/Users/rusnesileryte/Amazon WorkDocs Drive/My Documents/MASTER/DATA/'
 filename = 'CBS/goederenstatistiek.v4/300622 Tabel Regionale stromen 2015-2020 provincie met toelichting.xlsx'
@@ -151,15 +231,17 @@ elif 'dmc' in goal:
     viz_data = dmcs
     val = 'DMC'
 
-print(viz_data)
+# print(viz_data)
 viz_data = viz_data.groupby(['Provincie', 'year']).sum().reset_index()
-print(viz_data)
+# print(viz_data)
 
 if True:
     sns.set()
     fig = sns.FacetGrid(data=viz_data, col='Provincie', hue='Provincie', aspect=0.5, height=5, col_wrap=6)
     fig.set(xlim=(2015, 2030)) #, ylim=(0,80000))
 
+    # print(sns.regplot(x='year', y='DMI', data=viz_data))
+    df = regression(sns.regplot, "year", val, truncate=False)
     fig.map(sns.regplot, "year", val, truncate=False)
     # fig.add_legend()
 
