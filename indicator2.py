@@ -102,11 +102,6 @@ if False:
     viz_data.loc[viz_data['current_rank'] != viz_data['alt_rank'], 'alt_rank'] = viz_data['alt_rank'] + '.'
     # print(viz_data)
 
-    # open province shapefile
-    prov_areas = gpd.read_file('Spatial_data/provincies.shp')
-    prov_areas['total'] = 0
-    prov_areas['indic'] = 0
-
     # CALCULATE INDICATOR PER PROVINCE
     provinces = list(viz_data['province'].drop_duplicates())
 
@@ -119,9 +114,6 @@ if False:
         indicator = round(alternative / total * 100, 2)
         # print(province, indicator)
 
-        prov_areas.loc[prov_areas['name'] == province, 'total'] = total
-        prov_areas.loc[prov_areas['name'] == province, 'indic'] = indicator
-
         title = f'{province} {indicator}%'
 
         data.rename(columns={'current_rank': 'source', 'alt_rank': 'target'}, inplace=True)
@@ -130,7 +122,6 @@ if False:
         print(data)
         # sankey.draw_circular_sankey(data, title_text=title)
 
-    prov_areas.to_file(f'Spatial_data/indicators_per_province.shp')
 
 # BARCHART VIZ
 if False:
@@ -175,7 +166,7 @@ if False:
 
 
 # PARALLEL PLOTS VIZ
-if True:
+if False:
     # viz_data.loc[viz_data['current_rank'] != viz_data['alt_rank'], 'alt_rank'] = viz_data['alt_rank'] + '.'
     # print(viz_data)
 
@@ -205,10 +196,55 @@ if True:
                                          line={'color': color, 'shape': 'hspline'},
                                          counts=data.amount,
                                          arrangement='freeform',
-                                         sortpaths='backward')])
+                                         sortpaths='backward'
+                                         )])
 
+        fig.update_layout(title=f'{province} {indicator}%')
         fig.show()
 
-        data.to_excel(f'{province}_ind2.xlsx')
+        # OUTPUT DATA
+        current_distrib = data.groupby(['current_rank']).sum('amount')
+        alt_distrib = data.groupby(['alt_rank']).sum('amount')
 
-        break
+        current_distrib['amount'] = current_distrib['amount'] / total * 100
+        alt_distrib['amount'] = alt_distrib['amount'] / total * 100
+
+        data_percent = pd.merge(current_distrib, alt_distrib, left_index=True, right_index=True)
+        data_percent.index.rename('', inplace=True)
+        data_percent.columns = ['current, %', 'alternative, %']
+
+        print(data_percent)
+
+        writer = pd.ExcelWriter(f'Private_data/indicator2/{province}_ind2.xlsx', engine='xlsxwriter')
+
+        data.to_excel(writer, sheet_name='detailed')
+        data_percent.to_excel(writer, sheet_name='aggregated')
+
+        # break
+
+
+# OUTPUT ALL STATISTICS
+if True:
+
+    # open province shapefile
+    prov_areas = gpd.read_file('Spatial_data/provincies.shp')
+    prov_areas['total'] = 0
+    prov_areas['indic'] = 0
+
+    provinces = list(viz_data['province'].drop_duplicates())
+
+    for province in provinces:
+        data = viz_data[viz_data['province'] == province]
+        total = data['amount'].sum()
+        alternative = data[data['current_rank'] != data['alt_rank']]['amount'].sum()
+
+        # CALCULATE INDICATOR PER PROVINCE
+        indicator = round(alternative / total * 100, 2)
+        # print(province, indicator)
+
+        prov_areas.loc[prov_areas['name'] == province, 'total'] = total
+        prov_areas.loc[prov_areas['name'] == province, 'indic'] = indicator
+
+    print(prov_areas)
+
+    prov_areas.to_file(f'Spatial_data/indicators_per_province.shp')

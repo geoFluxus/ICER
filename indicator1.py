@@ -7,6 +7,11 @@ sns.set_theme(color_codes=True)
 filepath = '/Users/rusnesileryte/Amazon WorkDocs Drive/My Documents/MASTER/DATA/'
 filename = 'CBS/goederenstatistiek.v4/300622 Tabel Regionale stromen 2015-2020 provincie met toelichting.xlsx'
 
+# read division into biotic / abiotic resources
+# resource = pd.read_csv('Private_data/cbs_biotic_abiotic.csv', delimiter=';')
+resource = pd.read_csv('Private_data/cbs_biotic_abiotic_08.23.csv', delimiter=';') # CHANGED 23 Aug
+
+
 years = {'Tabel 1a': 2015,
          'Tabel 2a': 2016,
          'Tabel 3a': 2017,
@@ -45,19 +50,19 @@ relevant_cols = ['Provincie',
 
 lokale_winning_cols = ['Land- en tuinbouwproducten',
                        'Bosbouwproducten',
-                       'Cokes en aardolieproducten',
+                       # 'Cokes en aardolieproducten', # CHANGED 23 Aug
                        'Steenkool, bruinkool, aardgas en ruwe aardolie',
                        'Ertsen',
                        'Zout, zand, grind, klei']
 
 
-# goal = 'dmc_abiotic'
+goal = 'dmc_abiotic'
 # goal = 'dmi_abiotic'
 # goal = 'all_per_type'
 # goal = 'all_per_province'
 # goal = 'all'
 # goal = 'dmc_all'
-goal = 'dmi_all'
+# goal = 'dmi_all'
 
 
 dmcs = pd.DataFrame()
@@ -85,8 +90,6 @@ for sheet in years.keys():
     data = pd.merge(data, lokale_winning, how='left', on=['Provincie', 'Goederengroep'])
     data.fillna(0, inplace=True)
 
-    # read division into biotic / abiotic resources
-    resource = pd.read_csv('Private_data/cbs_biotic_abiotic.csv', delimiter=';')
 
     data = data.merge(resource, on='Goederengroep')
 
@@ -160,10 +163,10 @@ if True:
     fig.map(sns.regplot, "year", val, truncate=False)
     # fig.add_legend()
 
-    # plt.show()
+    plt.show()
 
     # plt.savefig('Private_data/images/dmc_abiotic.svg')
-    plt.savefig(f'Private_data/images/{goal}.png')
+    # plt.savefig(f'Private_data/images/{goal}.png')
 
 
 # ############### DEEPER ANALYSIS #################
