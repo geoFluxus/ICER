@@ -8,6 +8,9 @@ sns.set_theme(color_codes=True)
 
 # REGRESSION ANALYSIS
 def regression(func, *args, **kwargs):
+    # column name
+    col = args[1]
+
     # If color was a keyword argument, grab it here
     kw_color = kwargs.pop("color", None)
 
@@ -61,7 +64,7 @@ def regression(func, *args, **kwargs):
         plotter = _RegressionPlotter(*plot_args, **plot_kwargs)
         grid, yhat, err_bands = plotter.fit_regression(ax)
         label = plot_kwargs['label']
-        goal = data_ijk['DMI'].to_list()[0]
+        goal = data_ijk[col].to_list()[0]
         projected_value = yhat[-1]
 
         # bounds
