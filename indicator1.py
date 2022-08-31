@@ -8,6 +8,7 @@ sns.set_theme(color_codes=True)
 
 # REGRESSION ANALYSIS
 def regression(func, *args, **kwargs):
+
     # column name
     col = args[1]
 
@@ -64,7 +65,7 @@ def regression(func, *args, **kwargs):
         plotter = _RegressionPlotter(*plot_args, **plot_kwargs)
         grid, yhat, err_bands = plotter.fit_regression(ax)
         label = plot_kwargs['label']
-        goal = data_ijk[col].to_list()[0]
+        goal = data_ijk[col].to_list()[0]/2
         projected_value = yhat[-1]
 
         # bounds
@@ -149,8 +150,10 @@ lokale_winning_cols = ['Land- en tuinbouwproducten',
 # goal = 'agg_per_type' # output of all data aggregated per biotic/abiotic type
 # goal = 'agg_per_province'  # output of all data aggregated per province
 
-goal = 'analysis'  # deeper analysis of a single province
-province = 'Zuid-Holland'
+# goal = 'analysis'  # deeper analysis of a single province
+# province = 'Zeeland'
+
+goal = 'isolation'
 
 
 
@@ -169,6 +172,9 @@ for sheet in years.keys():
 
     # Exclude waste
     data = data[data['Goederengroep'] != 'Afval']
+    # data = data[data['Goederengroep'] != 'Steenkool, bruinkool, aardgas en ruwe aardolie']
+    # data = data[data['Goederengroep'] != 'Cokes en aardolieproducten']
+    # data = data[data['Goederengroep'] != 'Zout, zand, grind, klei']
 
     # Lokale winning
 
@@ -253,9 +259,9 @@ if not viz_data.empty:
     fig.set(xlim=(2015, 2030)) #, ylim=(0,80000))
 
     # print(sns.regplot(x='year', y='DMI', data=viz_data))
-    # results = regression(sns.regplot, "year", val, truncate=False)
+    results = regression(sns.regplot, "year", val, truncate=False)
 
-    # print(results)
+    print(results)
 
     fig.map(sns.regplot, "year", val, truncate=False)
     # fig.add_legend()
@@ -273,6 +279,7 @@ if 'analysis' in goal:
     value = 'DMC'
 
     prov_data = all_data[all_data['Provincie'] == province]
+    prov_data = prov_data[(prov_data['resource'] == 'abiotic')]
 
     # all product groups plotted
     product_data = prov_data[['cbs', value, 'year']]
@@ -289,6 +296,8 @@ if 'analysis' in goal:
 
         plt.show()
 
+
+if 'product' in goal:
 
     product = 'Steenkool, bruinkool, aardgas en ruwe aardolie'
     # all trade measures plotted
@@ -316,3 +325,40 @@ if 'analysis' in goal:
         # fig.add_legend()
 
         plt.show()
+
+
+if 'isolation' in goal:
+
+    abiotic = all_data[(all_data['resource'] == 'abiotic') | (all_data['resource'] == 'mixed')]
+    abiotic = abiotic[['Provincie', 'Goederengroep', 'DMC', 'year']]
+
+    # fossils
+    # isolation = {'Goederengroep': ['Steenkool, bruinkool, aardgas en ruwe aardolie',
+    #                                'Cokes en aardolieproducten'],
+    #              'Isolated group': ['fossils', 'fossils']}
+    # isoname = 'fossils'
+
+    # minerals
+    isolation = {'Goederengroep': ['Overige minerale producten'
+                                   ],
+                 'Isolated group': ['minerals']}
+    isoname = 'minerals'
+
+    # chemical products
+    # isolation = {'Goederengroep': ['Chemische producten en kunstmest'
+    #                                ],
+    #              'Isolated group': ['chemicals']}
+    # isoname = 'chemicals'
+
+    isolation = pd.DataFrame.from_dict(isolation)
+
+    abiotic = pd.merge(abiotic, isolation, how='left', on='Goederengroep')
+    abiotic.loc[abiotic['Isolated group'].isna(), 'Isolated group'] = 'other'
+
+    abiotic = abiotic.groupby(['Provincie', 'Isolated group', 'year'])['DMC'].sum()
+
+    abiotic = abiotic.unstack(level=-2)
+
+    abiotic['ratio'] = abiotic[isoname] / (abiotic[isoname] + abiotic['other']) * 100
+    print(abiotic)
+    abiotic.to_excel(f'Private_data/indicator2/{isoname}.xlsx')

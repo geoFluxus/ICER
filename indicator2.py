@@ -31,6 +31,10 @@ rladder = rladder[['R-rate', 'code']]
 restrictions = pd.read_excel('Private_data/R-ladder.xlsx', sheet_name='Restrictions')
 restrictions = restrictions[['code', 'exception']]
 
+exceptions = pd.read_excel('/Users/rusnesileryte/Amazon WorkDocs Drive/My Documents/MASTER/DATA/descriptions/alternatives_exclude_processes.xlsx')
+exceptions = exceptions[['EuralCode', 'VerwerkingsmethodeCode']]
+
+
 # connect to r-ladder
 
 all_data = pd.merge(all_data, rladder, how='left')
@@ -47,18 +51,23 @@ potential = potential[potential['R-rate_current'].str[0] > potential['R-rate_alt
 # filter out potential for group 'I'
 potential = potential[potential['R-rate_current'].str[0] != 'I']
 
-# filter out exceptions
+# filter out processing restrictions
 potential = pd.merge(potential, restrictions, how='left', left_on=['code_current', 'code_alt'], right_on=['code', 'exception'])
 potential = potential[potential['exception'].isna()]
 potential.drop(columns=['code', 'exception'], inplace=True)
 
+# filter out ewc-based exceptions
+potential = pd.merge(potential, exceptions, how='left', left_on=['ewc_code', 'code_alt'], right_on=['EuralCode', 'VerwerkingsmethodeCode'])
+potential = potential[potential['VerwerkingsmethodeCode'].isna()]
+potential.drop(columns=['EuralCode', 'VerwerkingsmethodeCode'], inplace=True)
+
 # select the best alternative per ewc per processing method
-alternative = potential.groupby(['code_current', 'ewc_code', 'R-rate_current'])['R-rate_alt'].agg('max').reset_index()
+alternative = potential.groupby(['code_current', 'ewc_code', 'R-rate_current'])['R-rate_alt'].agg('min').reset_index()
 alternative = pd.merge(alternative, rladder, how='left', left_on='R-rate_alt', right_on='R-rate')
 alternative.rename(columns={'code': 'code_alt'}, inplace=True)
 alternative.drop(columns=['R-rate'], inplace=True)
 
-# print(alternative)
+# alternative.to_excel('alternative.xlsx')
 
 # connect alternative treatment methods to all data
 
@@ -81,21 +90,11 @@ viz_data = viz_data.groupby(['province', 'R-rate', 'R-rate_alt'])['sum'].sum().r
 viz_data.columns = ['province', 'current_rank', 'alt_rank', 'amount']
 
 
-# filename = 'Indicator2'
-# sheet = 'All'
-# # sheet = 'Abiotisch'
-# # sheet = 'Biotisch'
-# # sheet = 'Gemengd'
-#
-# potential = pd.read_excel(f'{filename}.xlsx', sheet_name=sheet)
-#
-
-
 viz_data = pd.merge(viz_data, colors, left_on="alt_rank", right_index=True, how='left')
 viz_data['tag'] = viz_data['current_rank'] + "->" + viz_data["alt_rank"]
 
 
-print(viz_data)
+# print(viz_data)
 
 # SANKEY VIZ
 if False:
@@ -166,7 +165,7 @@ if False:
 
 
 # PARALLEL PLOTS VIZ
-if False:
+if True:
     # viz_data.loc[viz_data['current_rank'] != viz_data['alt_rank'], 'alt_rank'] = viz_data['alt_rank'] + '.'
     # print(viz_data)
 
