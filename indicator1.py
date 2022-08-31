@@ -65,7 +65,7 @@ def regression(func, *args, **kwargs):
         plotter = _RegressionPlotter(*plot_args, **plot_kwargs)
         grid, yhat, err_bands = plotter.fit_regression(ax)
         label = plot_kwargs['label']
-        goal = data_ijk[col].to_list()[0]/2
+        goal = data_ijk[col].to_list()[1]/2
         projected_value = yhat[-1]
 
         # bounds
@@ -142,7 +142,7 @@ lokale_winning_cols = ['Land- en tuinbouwproducten',
                        'Zout, zand, grind, klei']
 
 # TO VISUALISE
-# goal = 'dmc_abiotic'
+goal = 'dmc_abiotic'
 # goal = 'dmi_abiotic'
 # goal = 'dmc_all'
 # goal = 'dmi_all'
@@ -155,8 +155,7 @@ lokale_winning_cols = ['Land- en tuinbouwproducten',
 # goal = 'analysis'  # deeper analysis of a single province
 # province = 'Zeeland'
 
-goal = 'isolation'
-
+# goal = 'isolation'
 
 
 dmcs = pd.DataFrame()
@@ -186,7 +185,6 @@ for sheet in years.keys():
 
     data = pd.merge(data, lokale_winning, how='left', on=['Provincie', 'Goederengroep'])
     data.fillna(0, inplace=True)
-
 
     data = data.merge(resource, on='Goederengroep')
 
@@ -232,11 +230,11 @@ for sheet in years.keys():
 
 
 if 'dmi' in goal:
-    dmis.to_excel(f'Private_data/{goal}.xlsx')
+    dmis.to_excel(f'Private_data/indicator1/{goal}.xlsx')
 if 'dmc' in goal:
-    dmcs.to_excel(f'Private_data/{goal}.xlsx')
+    dmcs.to_excel(f'Private_data/indicator1/{goal}.xlsx')
 if 'all' in goal:
-    all_data.to_excel('Private_data/all_data.xlsx')
+    all_data.to_excel('Private_data/indicator1/all_data.xlsx')
 
 print(all_data)
 
@@ -260,18 +258,19 @@ if not viz_data.empty:
     fig = sns.FacetGrid(data=viz_data, col='Provincie', hue='Provincie', aspect=0.5, height=5, col_wrap=6)
     fig.set(xlim=(2015, 2030)) #, ylim=(0,80000))
 
-    # print(sns.regplot(x='year', y='DMI', data=viz_data))
     results = regression(sns.regplot, "year", val, truncate=False)
 
     print(results)
+    results.to_excel(f'Private_data/indicator1/{goal}_results.xlsx')
 
     fig.map(sns.regplot, "year", val, truncate=False)
     # fig.add_legend()
 
-    plt.show()
+    # plt.show()
 
     # plt.savefig('Private_data/images/dmc_abiotic.svg')
-    # plt.savefig(f'Private_data/images/{goal}.png')
+    plt.savefig(f'Private_data/indicator1/{goal}.svg')
+    plt.savefig(f'Private_data/indicator1/{goal}.png')
 
 
 # ############### DEEPER ANALYSIS #################
@@ -363,4 +362,4 @@ if 'isolation' in goal:
 
     abiotic['ratio'] = abiotic[isoname] / (abiotic[isoname] + abiotic['other']) * 100
     print(abiotic)
-    abiotic.to_excel(f'Private_data/indicator2/{isoname}.xlsx')
+    abiotic.to_excel(f'Private_data/indicator1/{isoname}.xlsx')
