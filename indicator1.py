@@ -78,8 +78,10 @@ def regression(func, *args, **kwargs):
         # export result
         d = {
             'label': [label],
-            'lower_bound': [bounds[0]],
-            'upper_bound': [bounds[1]],
+            'lower_bound_0': [err_bands[0].min()],
+            'lower_bound_1': [err_bands[1].min()],
+            'upper_bound_0': [err_bands[0].max()],
+            'upper_bound_1': [err_bands[1].max()],
             'projected_value': [projected_value],
             'goal': [goal]
         }
