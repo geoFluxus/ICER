@@ -24,7 +24,7 @@ plt.rcParams.update(styles.params)
 
 filename = '_ALL_TREATMENTS_PERCODE_PER_PROVINCE_'
 
-all_data = pd.read_excel(f'Private_data/{filename}.xlsx', sheet_name='Result 1')
+all_data = pd.read_excel(f'Private_data/indicator2/{filename}.xlsx', sheet_name='Result 1')
 
 rladder = pd.read_excel('Private_data/R-ladder.xlsx', sheet_name='R-ladder')
 rladder = rladder[['R-rate', 'code']]
@@ -172,6 +172,7 @@ if True:
     # CALCULATE INDICATOR PER PROVINCE
     provinces = list(viz_data['province'].drop_duplicates())
 
+
     for province in provinces:
 
         data = viz_data[viz_data['province'] == province]
@@ -199,7 +200,7 @@ if True:
                                          )])
 
         fig.update_layout(title=f'{province} {indicator}%')
-        fig.show()
+        # fig.show()
 
         # OUTPUT DATA
         current_distrib = data.groupby(['current_rank']).sum('amount')
@@ -208,22 +209,21 @@ if True:
         current_distrib['amount'] = current_distrib['amount'] / total * 100
         alt_distrib['amount'] = alt_distrib['amount'] / total * 100
 
-        data_percent = pd.merge(current_distrib, alt_distrib, left_index=True, right_index=True)
+        data_percent = pd.merge(current_distrib, alt_distrib, left_index=True, right_index=True, how='outer')
         data_percent.index.rename('', inplace=True)
         data_percent.columns = ['current, %', 'alternative, %']
 
         print(data_percent)
 
-        writer = pd.ExcelWriter(f'Private_data/indicator2/{province}_ind2.xlsx', engine='xlsxwriter')
-
-        data.to_excel(writer, sheet_name='detailed')
-        data_percent.to_excel(writer, sheet_name='aggregated')
+        with pd.ExcelWriter(f'Private_data/indicator2/{province}_ind2.xlsx') as writer:
+            data.to_excel(writer, sheet_name='detailed')
+            data_percent.to_excel(writer, sheet_name='aggregated')
 
         # break
 
 
 # OUTPUT ALL STATISTICS
-if True:
+if False:
 
     # open province shapefile
     prov_areas = gpd.read_file('Spatial_data/provincies.shp')
@@ -244,6 +244,6 @@ if True:
         prov_areas.loc[prov_areas['name'] == province, 'total'] = total
         prov_areas.loc[prov_areas['name'] == province, 'indic'] = indicator
 
-    print(prov_areas)
+    # print(prov_areas)
 
     prov_areas.to_file(f'Spatial_data/indicators_per_province.shp')

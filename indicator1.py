@@ -65,6 +65,7 @@ def regression(func, *args, **kwargs):
         plotter = _RegressionPlotter(*plot_args, **plot_kwargs)
         grid, yhat, err_bands = plotter.fit_regression(ax)
         label = plot_kwargs['label']
+        prime_value = data_ijk[col].to_list()[1]
         goal = data_ijk[col].to_list()[1]/2
         projected_value = yhat[-1]
 
@@ -83,7 +84,8 @@ def regression(func, *args, **kwargs):
             'upper_bound_0': [err_bands[0].max()],
             'upper_bound_1': [err_bands[1].max()],
             'projected_value': [projected_value],
-            'goal': [goal]
+            'goal': [goal],
+            '2016 value': [prime_value]
         }
         df.append(pd.DataFrame(data=d))
 

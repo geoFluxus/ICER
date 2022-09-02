@@ -36,5 +36,5 @@ params = {'legend.fontsize': 'xx-small',
           'axes.formatter.useoffset': False,
           'lines.marker': 'o',
           'font.family': 'sans-serif',
-          'figure.figsize': (6, 6),
+          'figure.figsize': (12, 4),
           }
