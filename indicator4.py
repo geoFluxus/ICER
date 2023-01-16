@@ -341,9 +341,9 @@ for province in provinces:
     print(normalised_data)
     print(province_data)
 
-    with pd.ExcelWriter(f'Private_data/results_per_province/{province}/Ind.4_{province}.xlsx') as writer:
-                normalised_data.to_excel(writer, sheet_name='Percentage')
-                province_data.to_excel(writer, sheet_name='GS_CE25 groep in g_ton')
+    with pd.ExcelWriter(f'Private_data/results_per_province/{province}/Ind.4_GS per DMI van CE25 in {province}.xlsx') as writer:
+                normalised_data.to_excel(writer, sheet_name='perc. van CE25 per GS')
+                province_data.to_excel(writer, sheet_name='g van GS per ton CE25')
     #
     #
     # # visualise
