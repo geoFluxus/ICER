@@ -1,8 +1,9 @@
 Private_data/
 results/
 data/
-.idea
+*.idea
 venv
-__pycache__
 full_logs.log
-.DS_Store
+*.DS_Store
+*.sql
+__pycache__
