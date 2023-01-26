@@ -1,8 +1,8 @@
 Private_data/
 results/
+data/
 .idea
 venv
 __pycache__
 full_logs.log
 .DS_Store
-.xlsx

@@ -76,6 +76,8 @@ transp_indicators['sum'] = transp_indicators.sum(axis=1)
 transp_indicators.sort_values(by=['sum'], inplace=True)
 transp_indicators.drop(columns=['sum'], inplace=True)
 
+transp_indicators_orig = transp_indicators_orig.reindex(transp_indicators.index)
+
 # draw figure
 fig = go.Figure(go.Heatmap(
     z=transp_indicators.values,
@@ -86,20 +88,20 @@ fig = go.Figure(go.Heatmap(
     textfont={"size": 10},
     xgap=4,
     ygap=1,
-    colorscale='RdYlGn_r'
+    colorscale='YlOrRd'
 ))
 
 fig.update_layout(font_size=10)
 fig.update_layout(width=400)
 fig.update_layout(height=1050)
 
-# fig.show()
+fig.show()
 
 # ______________________________________________________________________________
 # VISUALISE CRM VOLATILITY PER PRODUCT GROUP PER PROVINCE
 # ______________________________________________________________________________
-
-for province in provinces:
+if False:
+# for province in provinces:
 
     province_data = crm_dmi[crm_dmi['Provincie'] == province]
     province_data = province_data[province_data['Jaar'] == year]
