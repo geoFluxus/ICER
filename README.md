@@ -69,8 +69,6 @@ Due to the continual development of this dataset it will not be published here. 
 
 3) The distribution of (critical) abiotic resources per product by the Netherlands Organisation for Applied Scientific Research ('Nederlandse Organisatie voor Toegepast Natuurwetenschappelijk Onderzoek' or 'TNO' in Dutch).
 
-We are unable to release this dataset at this time.
-
 ## How to run the analysis
 
 If you have already received access to the full data package:
