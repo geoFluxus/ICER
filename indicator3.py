@@ -12,8 +12,9 @@ import os
 #  VISUALISE AS SCALED HORIZONTAL BARS
 # ______________________________________________________________________________
 # load dataset
-filename = 'data/Ind.3_CE25_processed_CBS_data_v1.1.xlsx'
-data = pd.read_excel(filename, sheet_name='Results', skiprows=1)
+model = 'data/geoFluxus/Ind.3_model_v1.1.xlsx'
+filename = 'data/geoFluxus/mki_per_TA_per_provincie.csv'
+data = pd.read_csv(filename, skiprows=1, sep=';')
 
 # import style
 params = styles.params
@@ -21,6 +22,8 @@ plt.rcParams.update(params)
 
 # normalise data
 data.set_index('MKI_DMI_M_EUR', inplace=True)
+
+data = data.astype(float)
 
 data = data.div(data.sum(axis=1), axis=0)
 
@@ -51,7 +54,7 @@ data.to_excel(f'{result_path}/Ind.3_alle_provincies_percentage.xlsx')
 # ______________________________________________________________________________
 
 # load dataset
-all_data = pd.read_excel(filename, sheet_name="Data")
+all_data = pd.read_excel(model, sheet_name="Data")
 all_data = all_data[['Provincie', 'Goederengroep', 'year', 'DMI_kton', 'MKI_DMI_M_EUR', 'CO2_DMI_kton', 'TA']]
 all_data.columns = ['Provincie', 'Goederengroep', 'Jaar', 'DMI (kt)', 'MKI (Mln.EUR)', 'CO2 eq. (kt)', 'Transitieagenda']
 

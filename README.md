@@ -5,10 +5,11 @@
 
 "The ICER report presents the state of affairs of the transition towards a circular economy in the Netherlands and contains guidelines for government policy on such a transition. The report describes the actions of stakeholders in society, the resources they are deploying and the government's intervention measures. It provides a summary of the Dutch use of raw materials and the associated environmental pressure and socio-economic effects. An ICER report will be published once every two years." The publishing body of the ICER is the Netherlands Environmental Assessment Agency or 'Planbureau voor de Leefomgeving' or 'PBL' in Dutch.
 
-- PBL, 2023 https://www.pbl.nl/sites/default/files/downloads/pbl-2021-integral-circular-economy-report-2021-4582.pdf
+- PBL, 2023
 
 The final version of the 2023 ICER can be found here:
-[LINK_TO_ICER_PUBLICATION____]
+
+https://www.pbl.nl/nieuws/2023/icer-2023-circulaire-doelen-liggen-nog-ver-buiten-bereik
 
 For the 2023 edition of the ICER several new topics were explored, commissioned by the Inter Provincial Counsel 'Interprovinciaal Overleg' or 'IPO' in Dutch. Since the final version of ICER 2023 included a summarized text based on the research results, this repository allows access to all underlying research methods and (desensitized) data sources. The innovation that took place centered around the integration of various public data sources on national and sub-national levels. We share the knowledge and tools of using public data to inform decision-making for a sustainable world. The goal is to normalize this practice for projects that use public resources, such as funding and data. 
 
@@ -72,7 +73,7 @@ We are unable to release this dataset at this time.
 
 ## How to run the analysis
 
-If you have already received access to the data package:
+If you have already received access to the full data package:
 
 1) Clone or fork the project
 
@@ -84,12 +85,25 @@ pip install -r requirements-dev.txt
 
 4) Run each code for the 4 indicators
 
-If you need access to the data package, please contact the following people:
-1) Chris XXXX
-2) Henk XXXX
-3) Ton XXXX
+If you need access to the full data package, please contact the following people to receive the permissions including your motivation:
+1) Chris de Blois ( c.deblois@cbs.nl ) from CBS for regional material input, output and throughput table per province;
+2) Henk Verwoerd ( henk.verwoerd@rws.nl ) from LMA for amounts of waste production in tonnes per province per EWC code in 2020;
 
-Once you have permission from all of them to receive access to the underlying data, please send an email to info@geofluxus.com with proof of permissions to receive the data package.
+Once you have permission from both of them to receive access to the underlying data, please send an email to info@monitorce.nl with proof of permissions and you will receive the data packages from us.
 
+## Data file structure
 
-
+| Path                                                | Description                                                                                                                                             | Access    | Used for ind. |
+|-----------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|-----------|---------------|
+| data/CBS/Regionale_stromen_2015-2020_provincie.xlsx | Regional material input, output and throughput, source: CBS                                                                                             | On demand | 1, 3, 4       |
+| data/LMA/All_treatments_per_code_per_province.xlsx  | Amounts of waste production in tonnes per province per EWC code, 2020, source: LMA & geoFluxus                                                          | On demand | 2             |
+| data/TNO/CRM_per_kg_CE25.csv                        | Amounts of abiotic raw materials, g per kg of each product group, source: TNO & geoFluxus                                                               | Open      | 4             |
+| data/TNO/Supply_security_indicators.csv             | Price, volatility and HHI of abiotic raw materials, source: TNO                                                                                         | Open      | 4             |
+| data/geoFluxus/alternatives_exclude_processes.csv   | Combinations of EWC codes and processing methods that cannot be realistic (the list is not exhaustive and based on real occurrences), source: geoFluxus | Open      | 2             |
+| data/geoFluxus/cbs_biotisch_abiotisch.csv           | Assignment of CBS product groups according to their predominant origin, source: geoFluxus                                                               | Open      | 1             |
+| data/geoFluxus/mki_per_TA_per_provincie.csv         | Environmental cost of material input per transition agenda per province in EUR, 2020, source: geoFluxus                                                 | Open      | 3             |
+| data/geoFluxus/R-ladder.xlsx                        | Assignment of LMA processing methods to waste treatment hierrachy (based on R-ladder), including restrictions, source: geoFluxus                        | Open      | 2             |
+| data/geoFluxus/Ind.3_model_v1.1.xlsx                | The excel model used to produce mki_per_TA_per_provincie.csv, source: geoFluxus                                                                         | On demand | 3             |
+| data/geoFluxus/Ind.4_model_v1.8.xlsx                | The excel model used to produce CRM_per_kg_CE25.csv, source: geoFluxus & TNO                                                                            | On demand | 4             |
+| data/EWC_NAMES.xlsx                                 | List of European Waste Classification codes and their names (NL), source: Eurostat                                                                      | Open      | 2             |
+| data/PROCESS_NAMES.xlsx                             | List of LMA codes and their names (NL), source: LMA                                                                                                     | Open      | 2             |

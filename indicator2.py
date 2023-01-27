@@ -20,16 +20,16 @@ def format_label(value, tick):
 colors = pd.DataFrame.from_dict(styles.COLORS, orient='index', columns=['colour'])
 plt.rcParams.update(styles.params)
 
-filename = '_ALL_TREATMENTS_PERCODE_PER_PROVINCE_'
+filename = 'LMA/All_treatments_per_code_per_province'
 
 all_data = pd.read_excel(f'data/{filename}.xlsx', sheet_name='Result 1')
 
-rladder_full = pd.read_excel('data/R-ladder.xlsx', sheet_name='R-ladder')
+rladder_full = pd.read_excel('data/geoFluxus/R-ladder.xlsx', sheet_name='R-ladder')
 rladder = rladder_full[['R-rate', 'code']]
-restrictions = pd.read_excel('data/R-ladder.xlsx', sheet_name='Restrictions')
+restrictions = pd.read_excel('data/geoFluxus/R-ladder.xlsx', sheet_name='Restrictions')
 restrictions = restrictions[['code', 'exception']]
 
-exceptions = pd.read_excel('data/alternatives_exclude_processes.xlsx')
+exceptions = pd.read_csv('data/geoFluxus/alternatives_exclude_processes.csv', sep=';')
 exceptions = exceptions[['EuralCode', 'VerwerkingsmethodeCode']]
 
 # ______________________________________________________________________________

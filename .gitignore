@@ -1,9 +1,14 @@
 Private_data/
 results/
-data/
 *.idea
 venv
 full_logs.log
 *.DS_Store
 *.sql
 __pycache__
+# ignore privata data files
+**/Regionale_stromen_2015-2020_provincie.xlsx
+**/All_treatments_per_code_per_province.xlsx
+**/Ind.3_model_v1.1.xlsx
+**/Ind.4_model_v1.8.xlsx
+
