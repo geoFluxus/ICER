@@ -83,11 +83,11 @@ pip install -r requirements-dev.txt
 
 4) Run each code for the 4 indicators
 
-If you need access to the full data package, please contact the following people to receive the permissions including your motivation:
-1) Chris de Blois ( c.deblois@cbs.nl ) from CBS for regional material input, output and throughput table per province;
-2) Henk Verwoerd ( henk.verwoerd@rws.nl ) from LMA for amounts of waste production in tonnes per province per EWC code in 2020;
+If you need access to the full data package, please contact info@monitorce.nl including your motivation. We will redirect your request to the following organisations to receive the permissions:
+1) CBS for regional material input, output and throughput table per province;
+2) LMA for amounts of waste production in tonnes per province per EWC code in 2020;
 
-Once you have permission from both of them to receive access to the underlying data, please send an email to info@monitorce.nl with proof of permissions and you will receive the data packages from us.
+Once you have permission from both of them to receive access to the underlying data you will receive the data package from us.
 
 ## Data file structure
 
