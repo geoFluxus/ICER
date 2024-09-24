@@ -29,10 +29,10 @@ goal = 'export_per_province'  # output of all data in separate files per provinc
 
 # read data file
 filepath = 'data/'
-filename = 'CBS/Regionale_stromen_2015-2020_provincie.xlsx'
+filename = 'CBS/110724 Dummytabel Provinciale stromen verfijnd 2015-2023 (concept).csv'
 
 # read division into biotic / abiotic product groups
-resource_type = pd.read_csv('data/geoFluxus/cbs_biotisch_abiotisch.csv', delimiter=';')
+resource_type = pd.read_csv('data/geoFluxus/cbs_biotisch_abiotisch_2024.csv', delimiter=';')
 
 
 # ______________________________________________________________________________

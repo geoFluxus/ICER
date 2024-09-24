@@ -20,9 +20,10 @@ def format_label(value, tick):
 colors = pd.DataFrame.from_dict(styles.COLORS, orient='index', columns=['colour'])
 plt.rcParams.update(styles.params)
 
-filename = 'LMA/All_treatments_per_code_per_province'
+# filename = 'LMA/All_treatments_per_code_per_province'
+filename = 'LMA/haarlem_2023_eigen_org'
 
-all_data = pd.read_excel(f'data/{filename}.xlsx', sheet_name='Result 1')
+all_data = pd.read_excel(f'data/{filename}.xlsx')
 
 rladder_full = pd.read_excel('data/geoFluxus/R-ladder.xlsx', sheet_name='R-ladder')
 rladder = rladder_full[['R-rate', 'code']]
