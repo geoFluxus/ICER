@@ -9,6 +9,7 @@ __pycache__
 # ignore privata data files
 **/Regionale_stromen_2015-2020_provincie.xlsx
 **/All_treatments_per_code_per_province.xlsx
+**/compressed_process_data.p
 **/Ind.3_model_v1.1.xlsx
 **/Ind.4_model_v1.8.xlsx
 
