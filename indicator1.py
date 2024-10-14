@@ -17,10 +17,10 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 # goal = 'all'  # output of all data after the analysis, per province, per product
 # goal = 'agg_per_type' # output of all data aggregated per biotiC/abiotiC type
 # goal = 'agg_per_province'  # output of all data with product groups aggregated per province
-goal = 'export_per_province'  # output of all data in separate files per province
+# goal = 'export_per_province'  # output of all data in separate files per province
 
 # if the goal of this script is TO VISUALISE analysis results
-# goal = 'dmc_all' # visualise the DMC trend for all products
+goal = 'dmc_all' # visualise the DMC trend for all products
 # goal = 'dmi_all' # visualise the DMI trend for all products
 # goal = 'dmc_abiotisch' # visualise the DMC trend for all abiotic products
 # goal = 'dmi_abiotisch' # visualise the DMI trend for all abiotic products
@@ -29,7 +29,7 @@ goal = 'export_per_province'  # output of all data in separate files per provinc
 
 # read data file
 filepath = 'data/'
-filename = 'CBS/110724 Dummytabel Provinciale stromen verfijnd 2015-2023 (concept).csv'
+filename = 'CBS/110724 Dummytabel Provinciale stromen verfijnd 2015-2023 (concept).xlsx'
 
 # read division into biotic / abiotic product groups
 resource_type = pd.read_csv('data/geoFluxus/cbs_biotisch_abiotisch_2024.csv', delimiter=';')
@@ -81,7 +81,7 @@ def regression(func, *args, **kwargs):
         plot_data = data_ijk[list(args)]
         if fig._dropna:
             plot_data = plot_data.dropna()
-        plot_args = [v for k, v in plot_data.iteritems()]
+        plot_args = [v for k, v in plot_data.items()]
 
         # Some matplotlib functions don't handle pandas objects correctly
         if func_module.startswith("matplotlib"):
@@ -135,28 +135,32 @@ years = {'Tabel 1a': 2015,
          'Tabel 3a': 2017,
          'Tabel 4a': 2018,
          'Tabel 5a': 2019,
-         'Tabel 6a': 2020}
+         'Tabel 6a': 2020,
+         'Tabel 7a': 2021,
+         'Tabel 8a': 2022,
+         'Tabel 9a': 2023}
 
 columns = ['Provincie',
            'Goederengroep',
-           'Doorvoer',
-           'Doorvoer_sf',
-           'Invoer_nationaal',
-           'Invoer_nationaal_sf',
-           'Invoer_internationaal',
-           'Invoer_internationaal_sf',
-           'Invoer_wederuitvoer',
-           'Invoer_wederuitvoer_sf',
-           'Distributie',
-           'Distributie_sf',
+           'Goederengroep_nr',
            'Aanbod',
-           'Aanbod_sf',
-           'Uitvoer_nationaal',
-           'Uitvoer_nationaal_sf',
+           'Distributie',
+           'Doorvoer',
+           'Invoer_internationaal',
+           'Invoer_nationaal',
+           'Invoer_voor_wederuitvoer',
            'Uitvoer_internationaal',
-           'Uitvoer_internationaal_sf',
+           'Uitvoer_nationaal',
            'Wederuitvoer',
-           'Wederuitvoer_sf']
+           'Aanbod_eigen_regio standaard-fout',
+           'Distributie standaard-fout',
+           'Doorvoer standaard-fout',
+           'Invoer_internationaal standaard-fout',
+           'Invoer_nationaal standaard-fout',
+           'Invoer_voor_wederuitvoer standaard-fout',
+           'Uitvoer_internationaal standaard-fout',
+           'Uitvoer_nationaal standaard-fout',
+           'Wederuitvoer standaard-fout']
 
 relevant_cols = ['Provincie',
                  'Goederengroep',
@@ -166,15 +170,8 @@ relevant_cols = ['Provincie',
                  'Uitvoer_nationaal',
                  'Uitvoer_internationaal']
 
-# a list of products groups that refer to local extraction of materials
-lokale_winning_cols = ['Land- en tuinbouwproducten',
-                       'Bosbouwproducten',
-                       'Steenkool, bruinkool, aardgas en ruwe aardolie',
-                       'Ertsen',
-                       'Zout, zand, grind, klei']
-
 # create results folder for saving the result files
-result_path = 'results/indicator1/'
+result_path = 'dummy_results/indicator1/'
 if not os.path.exists(result_path):
     os.makedirs(result_path)
     print(f"All results will be saved in the directory {result_path}")
@@ -191,7 +188,7 @@ all_raw_data = pd.DataFrame()
 
 for sheet in years.keys():
 
-    data = pd.read_excel(filepath + filename, sheet_name=sheet, header=1, skipfooter=2)
+    data = pd.read_excel(filepath + filename, sheet_name=sheet, header=1)
     data = data.drop(data.index[0])
     data = data.dropna(how='all', axis='columns')
 
@@ -203,10 +200,13 @@ for sheet in years.keys():
     data = data[relevant_cols]
 
     # Exclude waste
-    data = data[data['Goederengroep'] != 'Afval']
+    data = data[~data['Goederengroep'].str.contains('afval', case=False, na=False)]
 
     # compute local extraction (lokale winning)
-    lokale_winning = data[data['Goederengroep'].isin(lokale_winning_cols)].copy(deep=True)
+    lokale_winning_groups = resource_type[resource_type['Lokale winning'] == 'ja']
+    lokale_winning_groups = lokale_winning_groups['Goederengroep'].tolist()
+
+    lokale_winning = data[data['Goederengroep'].isin(lokale_winning_groups)].copy(deep=True)
     lokale_winning['Winning'] = lokale_winning['Uitvoer_nationaal'] + lokale_winning['Uitvoer_internationaal'] + lokale_winning['Aanbod']
     lokale_winning = lokale_winning[['Provincie', 'Goederengroep', 'Winning']]
 
