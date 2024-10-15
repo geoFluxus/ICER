@@ -1,0 +1,70 @@
+﻿cbs;Goederengroep;Grondstof;Lokale winning
+1;Granen;biotisch;ja
+2;Aardappelen;biotisch;ja
+3;Suikerbieten ;biotisch;ja
+4;Andere verse groenten en vers fruit;biotisch;ja
+5;Producten van de bosbouw;biotisch;ja
+6;Levende planten en bloemen;biotisch;ja
+7;Andere stoffen van plantaardige oorsprong;biotisch;ja
+8;Levende dieren;biotisch;ja
+9;Rauwe melk van runderen, schapen en geiten;biotisch;ja
+10;Andere grondstoffen van dierlijke oorsprong;biotisch;ja
+11;Vis en andere visserijproducten ;biotisch;ja
+12;Steenkool en bruinkool ;abiotisch;ja
+13;Ruwe aardolie ;abiotisch;ja
+14;Aardgas ;abiotisch;ja
+15;IJzererts;abiotisch;ja
+16;Non-ferrometaalertsen;abiotisch;ja
+17;Mineralen voor de chemische en kunstmestindustrie;abiotisch;ja
+18;Zout;abiotisch;ja
+19;Steen, zand, grind, klei, turf en andere delfstoffen;abiotisch;ja
+20;Vlees, ongelooide huiden en vellen en vleesproducten;biotisch;nee
+21;Vis en visproducten, verwerkt en verduurzaamd;biotisch;nee
+22;Groenten en fruit, verwerkt en verduurzaamd;biotisch;nee
+23;Dierlijke en plantaardige oliÎn en vetten;biotisch;nee
+24;Zuivelproducten en consumptie-ijs;biotisch;nee
+25;"Maalderijproducten, zetmeel en zetmeelproducten; bereide diervoeders";biotisch;nee
+26;Dranken;biotisch;nee
+27;Overige voedingsmiddelen en tabaksproducten;biotisch;nee
+28;Textiel ;biotisch;nee
+29;Kleding en artikelen van bont;biotisch;nee
+30;Leder en lederwaren ;biotisch;nee
+31;Hout- en kurkwaren (m.u.v. meubelen);biotisch;nee
+32;Pulp, papier en papierwaren;biotisch;nee
+33;Drukwerk en opgenomen media;gemengd;nee
+34;Cokesovenproducten, briketten, eierkolen en dergelijke vaste brandstoffen;abiotisch;nee
+35;Vloeibare geraffineerde aardolieproducten ;abiotisch;nee
+36;Gasvormige aardolieproducten, ook indien vloeibaar gemaakt of geperst;abiotisch;nee
+37;Geraffineerde vaste of wasvormige aardolieproducten;abiotisch;nee
+38;Anorganische chemische basisproducten;abiotisch;nee
+39;Organische chemische basisproducten;abiotisch;nee
+40;Kunstmeststoffen en stikstofverbindingen (behalve natuurlijke meststoffen);abiotisch;nee
+41;Kunststoffen en synthetische rubber in primaire vormen;abiotisch;nee
+42;Farmaceutische producten en chemische specialiteiten;abiotisch;nee
+43;Producten van rubber of kunststof;abiotisch;nee
+44;Glas en glaswerk, keramische producten;abiotisch;nee
+45;Cement, kalk en gips;abiotisch;nee
+46;Overige bouwmaterialen en ?producten;gemengd;nee
+47;IJzer en staal in primaire vormen (behalve buizen);abiotisch;nee
+48;Non-ferrometalen en producten daarvan;abiotisch;nee
+49;Metalen buizen, pijpen, holle profielen en fittings daarvoor;abiotisch;nee
+50;Metalen constructieproducten;abiotisch;nee
+51;Ketels, ijzerwaren, wapens en andere producten van metaal ;abiotisch;nee
+52;Machines en werktuigen voor de landbouw en de bosbouw;abiotisch;nee
+53;Huishoudapparaten (witgoed);abiotisch;nee
+54;Kantoormachines en computers;abiotisch;nee
+55;Overige elektrische machines en apparaten;abiotisch;nee
+56;Elektronische onderdelen en zend- en transmissietoestellen;abiotisch;nee
+57;Televisie- en radiotoestellen, audio- en videoapparatuur (bruingoed);abiotisch;nee
+58;"Medische apparatuur en instrumenten, precisie- en optische instrumenten; uurwerken";abiotisch;nee
+59;Overige machines, gereedschapswerktuigen en onderdelen;abiotisch;nee
+60;Producten van de auto-industrie;abiotisch;nee
+61;Andere transportmiddelen;abiotisch;nee
+62;Meubilair ;gemengd;nee
+63;Overige industrieproducten;abiotisch;nee
+64;Huishoudelijk afval en gemeentelijk afval;gemengd;nee
+65;Overig afval en secundaire grondstoffen, biotisch;biotisch;nee
+66;Overig afval en secundaire grondstoffen, fossiel;abiotisch;nee
+67;Overig afval en secundaire grondstoffen, metalen;abiotisch;nee
+68;Overig afval en secundaire grondstoffen, mineralen;abiotisch;nee
+69;Overige goederen;gemengd;nee
