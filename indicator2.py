@@ -4,7 +4,6 @@ import styles
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import os
-
 # this setting should be set to 'warn' if any changes are made to the original code
 pd.options.mode.chained_assignment = None
 
@@ -32,36 +31,12 @@ restrictions = restrictions[['code', 'exception']]
 exceptions = pd.read_excel('data/geoFluxus/alternatives_exclude_processes.xlsx')
 exceptions = exceptions[['EuralCode', 'VerwerkingsmethodeCode']]
 
-# ______________________________________________________________________________
-# SPLIT AND SAVE RAW DATA PER PROVINCE
-# ______________________________________________________________________________
-
-# create results folder for saving the result files
-result_path = 'results/indicator2/'
-if not os.path.exists(result_path):
-    os.makedirs(result_path)
-    print(f"All results will be saved in the directory {result_path}")
-
-ewc_names = pd.read_excel('data/EWC_NAMES.xlsx')
-process_names = pd.read_excel('data/PROCESS_NAMES.xlsx')
-
-export_data = pd.merge(all_data, rladder_full, how='left')
-export_data = pd.merge(export_data, ewc_names, how='left')
-export_data = pd.merge(export_data, process_names, how='left')
-
-export_data = export_data[['province', 'ewc_code', 'ewc_name', 'code', 'name', 'R-description', 'sum']]
-export_data.columns = ['provincie', 'euralcode', 'euralcode naam', 'verwerkingsmethodecode LMA', 'verwerkingsmethode', 'verwerkingsgroep', 'gewicht (ton)']
-
-provinces = list(export_data['provincie'].drop_duplicates())
-for province in provinces:
-    prov_data = export_data[export_data['provincie'] == province]
-
-    export_path = f'{result_path}/results_per_province/' + province
-    if not os.path.exists(export_path):
-        os.makedirs(export_path)
-
-    prov_data.to_excel(f'{export_path}/Ind.2_{province}_afvalstatistiek.xlsx')
-print(f"All processing data per province has been saved to {result_path}/results_per_province/")
+old_total = all_data['sum'].sum()
+tuples_in_df = pd.MultiIndex.from_frame(all_data[['ewc_code', 'code']])
+tuples_in_exceptions = pd.MultiIndex.from_frame(exceptions[['EuralCode', 'VerwerkingsmethodeCode']])
+all_data = all_data[~tuples_in_df.isin(tuples_in_exceptions)]
+new_total = all_data['sum'].sum()
+print(new_total/old_total)
 
 # ______________________________________________________________________________
 # CHOOSE THE BEST ALTERNATIVE PER EWC CODE
@@ -116,6 +91,42 @@ viz_data.columns = ['province', 'current_rank', 'alt_rank', 'amount']
 viz_data = pd.merge(viz_data, colors, left_on="alt_rank", right_index=True, how='left')
 viz_data['tag'] = viz_data['current_rank'] + "->" + viz_data["alt_rank"]
 
+
+# ______________________________________________________________________________
+# SPLIT AND SAVE RAW DATA PER PROVINCE
+# ______________________________________________________________________________
+
+# create results folder for saving the result files
+result_path = 'results/indicator2/'
+if not os.path.exists(result_path):
+    os.makedirs(result_path)
+    print(f"All results will be saved in the directory {result_path}")
+
+ewc_names = pd.read_excel('data/EWC_NAMES.xlsx')
+process_names = pd.read_excel('data/PROCESS_NAMES.xlsx')
+
+export_data = pd.merge(all_data, rladder_full, how='left')
+export_data = pd.merge(export_data, ewc_names, how='left')
+export_data = pd.merge(export_data, process_names, how='left')
+
+export_data = export_data[['province', 'ewc_code', 'ewc_name', 'code', 'name', 'R-description', 'sum', 'code_alt']]
+export_data = pd.merge(export_data, process_names, how='left', left_on='code_alt', right_on='code')
+export_data = export_data[['province', 'ewc_code', 'ewc_name', 'code_x', 'name_x', 'R-description',
+       'sum', 'code_alt', 'name_y']]
+export_data.columns = ['provincie', 'euralcode', 'euralcode naam', 'verwerkingsmethodecode LMA', 'verwerkingsmethode',
+                       'verwerkingsgroep', 'gewicht (ton)', 'Alternatievecode','Beschrijving alternatieve code']
+
+provinces = list(export_data['provincie'].drop_duplicates())
+for province in provinces:
+    prov_data = export_data[export_data['provincie'] == province]
+
+    export_path = f'{result_path}/results_per_province/' + province
+    if not os.path.exists(export_path):
+        os.makedirs(export_path)
+
+    prov_data.to_excel(f'{export_path}/Ind.2_{province}_afvalstatistiek.xlsx')
+print(f"All processing data per province has been saved to {result_path}/results_per_province/")
+
 # ______________________________________________________________________________
 #  CALCULATE INDICATOR PER PROVINCE &
 #  VISUALISE IMPROVEMENT POTENTIAL AS PARALLEL PLOTS
@@ -154,7 +165,9 @@ for province in provinces:
                                      )])
 
     fig.update_layout(title=f'{province} {indicator}%')
-    # open figure in a browser
+    # save figure to file, and open figure in a browser
+    fig.write_image(f'{result_path}/results_per_province/{province}/{province}_sankey.png',
+                    width = 650, height=1000, scale = 2)
     fig.show()
 
     # OUTPUT DATA PER PROVINCE

@@ -62,7 +62,6 @@ def compile_methods_per_province():
         print(f'done with {i*chunksize} rows. This iter took {np.round(end_time-start_time, 2)} seconds')
         start_time = time.time()
 
-    print(data_dict)
     with open(f'data\\compressed_process_data.p', 'wb') as f:
         pickle.dump(data_dict, f)
 
