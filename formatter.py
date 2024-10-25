@@ -8,19 +8,84 @@ pd.set_option('display.max_rows', None)
 
 """This script converts the dummy CBS file into the standard CBS data template"""
 
+corop_to_province = {
+'Oost-Groningen': 'Groningen',
+'Delfzijl e.o.': 'Groningen',
+'Overig Groningen': 'Groningen',
+'Noord-Friesland': 'Friesland',
+'Zuidwest-Friesland': 'Friesland',
+'Zuidoost-Friesland': 'Friesland',
+'Noord-Drenthe': 'Drenthe',
+'Zuidoost-Drenthe': 'Drenthe',
+'Zuidwest-Drenthe': 'Drenthe',
+'Noord-Overijssel': 'Overijssel',
+'Zuidwest-Overijssel': 'Overijssel',
+'Twente': 'Overijssel',
+'Veluwe': 'Gelderland',
+'Achterhoek': 'Gelderland',
+'Aggl. Arnhem/Nijmegen': 'Gelderland',
+'Zuidwest-Gelderland': 'Gelderland',
+'Utrecht-West': 'Utrecht',
+'Stadsgewest Amersfoort': 'Utrecht',
+'Stadsgewest Utrecht': 'Utrecht',
+'Zuidoost-Utrecht': 'Utrecht',
+'Kop van Noord-Holland': 'Noord-Holland',
+'Alkmaar e.o.': 'Noord-Holland',
+'IJmond': 'Noord-Holland',
+'Agglomeratie Haarlem': 'Noord-Holland',
+'Overig Agglomeratie Amsterdam': 'Noord-Holland',
+'Zaanstreek': 'Noord-Holland',
+'Haarlemmermeer e.o.': 'Noord-Holland',
+'Groot-Amsterdam': 'Noord-Holland',
+'Amsterdam': 'Noord-Holland',
+'Edam-Volendam e.o.': 'Noord-Holland',
+'Het Gooi en Vechtstreek': 'Noord-Holland',
 
-def run(data, filename):
+'Agglomeratie Leiden en Bollenstreek': 'Zuid-Holland',
+r"Agglomeratie’s-Gravenhage (Excl. Zoetermeer)": "Zuid-Holland",
+'Zoetermeer': 'Zuid-Holland',
+'Delft en Westland': 'Zuid-Holland',
+'Oost-Zuid-Holland': 'Zuid-Holland',
+'Rijnmond': 'Zuid-Holland',
+'Overig Groot-Rijnmond': 'Zuid-Holland',
+'Drechtsteden': 'Zuid-Holland',
+'Overig Zuidoost-Zuid-Holland': 'Zuid-Holland',
+'Zeeuwsch-Vlaanderen': "Zeeland",
+'Overig Zeeland': "Zeeland",
+'West-Noord-Brabant': "Noord-Brabant",
+'Midden-Noord-Brabant': "Noord-Brabant",
+r"Stadsgewest ’s-Hertogenbosch": 'Noord-Brabant',
+'Overig Noordoost-Noord-Brabant': "Noord-Brabant",
+'Zuidoost-Noord-Brabant': "Noord-Brabant",
+'Noord-Limburg': "Limburg",
+'Midden-Limburg': "Limburg",
+'Zuid-Limburg': "Limburg",
+'Almere': "Flevoland",
+'Flevoland-Midden': "Flevoland",
+'Noordoostpolder en Urk': "Flevoland"
+}
+
+
+def run(data, filename, corop=False):
 
     # filter out totals from the gebruiksgroep_naam, group by
     data = data[data['Gebruiksgroep_naam'] != 'Totaal']
+
     # drop unnecessary columns
-    data = data.drop(columns=['Stroom_nr', 'Provincie_nr', 'Gebruiksgroep_nr', 'Gebruiksgroep_naam'])
+    if not corop:
+        data = data.drop(columns=['Stroom_nr', 'Provincie_nr', 'Gebruiksgroep_nr', 'Gebruiksgroep_naam'])
+    else:
+        for i in ['Brutogew', 'Sf_brutogew', 'Waarde', 'Sf_waarde']:
+            data[i] = data[i].str.replace(',', '.')
+            data[i] = data[i].str.replace(' ', '0')
+            data[i] = data[i].astype(float)
+        data['Provincienaam'] = data['Regionaam'].apply(lambda x: corop_to_province[x])
+        data = data.drop(columns=['Stroom_nr', 'Regionr', 'Gebruiksgroep_nr', 'Gebruiksgroep_naam'])
     # group by
     data = data.groupby(['Jaar', 'Stroom', 'Provincienaam', 'Goederengroep_nr', 'Goederengroep_naam']).sum().reset_index()
 
     cols = {'gewicht': ['Brutogew', 'Sf_brutogew'],
             'waarde': ['Waarde', 'Sf_waarde']}
-
     # Create an Excel writer object
     with pd.ExcelWriter(f'data/{filename}.xlsx', engine='openpyxl') as writer:
         no = 0
@@ -39,6 +104,7 @@ def run(data, filename):
                                                     cols_tab[0]: tab,
                                                     cols_tab[1]: 'standaard-fout'})
 
+
                 # Pivoting the DataFrame
                 data_pivoted = data_tab.pivot_table(
                     index=['Jaar', 'Provincie', 'Goederengroep', 'Goederengroep_nr'],
@@ -54,14 +120,13 @@ def run(data, filename):
                 data_tab = data_pivoted.reset_index()
 
                 data_tab.drop(columns='Jaar', inplace=True)
-
                 # Format sheet name
                 if tab == 'gewicht':
                     letter = 'a'
-                    unit = 'euro'
+                    unit = 'kg'
                 elif tab == 'waarde':
                     letter = 'b'
-                    unit = 'kg'
+                    unit = 'euro'
                 sheet_name = f'Tabel {no}{letter}'
 
                 # Write the dataframe to a sheet starting from the fourth row (index 3)
@@ -84,8 +149,7 @@ def run(data, filename):
 
 if __name__ == '__main__':
     filepath = 'data/'
-    filename = 'CBS/110724 Dummytabel Provinciale stromen verfijnd 2015-2023 (concept)'
+    filename = 'CBS/181024 Tabel Regionale stromen 2015-2022 COROPplus CE67 GC6'
 
-    all_data = pd.read_csv(filepath + filename +'.csv', delimiter=';', decimal=',')
-
-    run(all_data, filename)
+    all_data = pd.read_csv(filepath + filename +'.csv', delimiter=';', decimal=',', encoding='cp1252')
+    run(all_data, filename, corop=True)
