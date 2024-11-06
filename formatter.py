@@ -74,6 +74,12 @@ def run(data, filename, corop=False):
     # drop unnecessary columns
     if not corop:
         data = data.drop(columns=['Stroom_nr', 'Provincie_nr', 'Gebruiksgroep_nr', 'Gebruiksgroep_naam'])
+
+        #If there are columns left empty; typecast all values to floats
+        for i in ['Brutogew', 'Sf_brutogew', 'Waarde', 'Sf_waarde']:
+            data[i] = data[i].str.replace(',', '.')
+            data[i] = data[i].str.replace(' ', '0')
+            data[i] = data[i].astype(float)
     else:
         for i in ['Brutogew', 'Sf_brutogew', 'Waarde', 'Sf_waarde']:
             data[i] = data[i].str.replace(',', '.')
@@ -149,7 +155,7 @@ def run(data, filename, corop=False):
 
 if __name__ == '__main__':
     filepath = 'data/'
-    filename = 'CBS/181024 Tabel Regionale stromen 2015-2022 COROPplus CE67 GC6'
+    filename = 'CBS/181024 Tabel Regionale stromen 2015-2022 provincie CE67 GC6'
 
     all_data = pd.read_csv(filepath + filename +'.csv', delimiter=';', decimal=',', encoding='cp1252')
-    run(all_data, filename, corop=True)
+    run(all_data, filename)
