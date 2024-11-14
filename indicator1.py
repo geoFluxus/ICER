@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from seaborn.regression import _RegressionPlotter
+import styles
 
 sns.set_theme(color_codes=True)
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -334,7 +335,7 @@ def calculate_indicators(path, file_name, sheets, raw_materials=False, cbs_to_rm
         return dmcs, dmis, all_data, all_raw_data
 
 
-def visualize_results(show_plt=False):
+def visualize_results(show_plt=False, per_province=False):
     goals = ['dmi', 'dmc', 'rmc', 'rmi']
 
     for goal in goals:
@@ -352,30 +353,72 @@ def visualize_results(show_plt=False):
             val = 'RMI'
         else:
             viz_data = pd.DataFrame
-
+        provinces = list(viz_data['Provincie'].unique())
         viz_data = viz_data.groupby(['Provincie', 'Jaar']).sum().reset_index()
         sns.set()
         if val == 'RMC' or val == 'RMI':
             viz_data[val] = viz_data[val].astype(float)
 
-        fig = sns.FacetGrid(data=viz_data, col='Provincie', hue='Provincie', aspect=0.5, height=5, col_wrap=6)
-        fig.set(xlim=(2015, 2030))
-        results = regression(sns.regplot, fig, "Jaar", val, truncate=False)
+        if not per_province:
+            fig = sns.FacetGrid(data=viz_data, col='Provincie', hue='Provincie', aspect=0.5, height=5, col_wrap=6)
+            fig.set(xlim=(2015, 2030))
+            results = regression(sns.regplot, fig, "Jaar", val, truncate=False)
 
-        results.to_excel(f'{result_path}{goal}_results.xlsx')
-        print(f'Regression analysis results have been saved to {result_path}{goal}_results.xlsx')
+            results.to_excel(f'{result_path}{goal}_results.xlsx')
+            print(f'Regression analysis results have been saved to {result_path}{goal}_results.xlsx')
 
-        fig.map(sns.regplot, "Jaar", val, truncate=False)
+            fig.map(sns.regplot, "Jaar", val, truncate=False)
 
         # if you leave this line uncommented, an image will be rendered on screen but not saved in a file
-        if show_plt:
+            if show_plt:
+                plt.show()
+
+            plt.savefig(f'{result_path}/{goal}.svg')
+            plt.savefig(f'{result_path}/{goal}.png')
+            print(f'Regression analysis visualisations have been saved to {result_path}{goal}.png & .svg')
+        else:
+            for i in range(len(provinces)):
+                plt.close()
+                fig = sns.regplot(data=viz_data[viz_data['Provincie'] == provinces[i]], x='Jaar', y=val)
+                #results = regression(sns.regplot, fig, "Jaar", val, truncate=False)
+                plt.show()
+
+def visualise_per_province(show = False, one_plot = False):
+    provinces = list(dmis['Provincie'].unique())
+    vals = [dmis, dmcs, rmis, rmcs]
+    labels = ['DMI', 'DMC', 'RMI', 'RMC']
+    for i in range(len(vals)):
+        vals[i] = vals[i].groupby(['Provincie', 'Jaar']).sum().reset_index()
+    for i in range(len(provinces)):
+        plt.close()
+        fig, axs = plt.subplots(nrows=2, ncols=2, sharey='row', figsize=(12, 12))
+        for j in range(len(vals)):
+            axs[int(j/2),j%2].set(xlim=(2015,2030))
+            plot = sns.regplot(data=vals[j][vals[j]['Provincie'] == provinces[i]], x='Jaar', y=labels[j], ax=axs[int(j/2),j%2],
+                               truncate=False, color=styles.cols[int(j/2)])
+            plot.set_title(labels[j])
+            #plot.set(xlim=(2015, 2030))
+            plot.set(ylim=(0,None))
+        # results = regression(sns.regplot, fig, "Jaar", val, truncate=False)
+        if one_plot:
+            ab_vals = [dmis_ab, dmcs_ab, rmis_ab, rmcs_ab]
+            for k in range(len(ab_vals)):
+                ab_vals[k] = ab_vals[k].groupby(['Provincie', 'Jaar']).sum().reset_index()
+            for j in range(len(ab_vals)):
+                plot = sns.regplot(data=ab_vals[j][ab_vals[j]['Provincie'] == provinces[i]], x='Jaar', y=labels[j],
+                                   ax=axs[int(j / 2), j % 2],
+                                   truncate=False, color='grey')
+                plot.set_title(labels[j])
+        if show:
             plt.show()
-
-        plt.savefig(f'{result_path}/{goal}.svg')
-        plt.savefig(f'{result_path}/{goal}.png')
-        print(f'Regression analysis visualisations have been saved to {result_path}{goal}.png & .svg')
-
-
+        else:
+            if 'abiotisch' in result_path:
+                text = ' Abiotisch'
+            else:
+                text = ' Totaal'
+            if one_plot:
+                text = ' Totaal en Abiotisch'
+            plt.savefig(f'{result_path}/{provinces[i]}{text}.png', dpi = 200)
 # ______________________________________________________________________________
 #  NON-ADJUSTABLE PARAMETERS
 # ______________________________________________________________________________
@@ -445,7 +488,7 @@ if __name__ == '__main__':
     }
 
     # create results folder for saving the result files
-    result_path = 'results/indicator1/abiotisch/'
+    result_path = 'results/indicator1/'
     if not os.path.exists(result_path):
         os.makedirs(result_path)
         print(f"All results will be saved in the directory {result_path}")
@@ -488,21 +531,22 @@ if __name__ == '__main__':
     # 'dmi_abiotisch' # visualise the DMI trend for all abiotic products
 
     # Call the calculate indicators function with raw material calculations enabled.
-    dmcs, dmis, rmcs, rmis, all_data, all_raw_data, all_rm_data, all_eur_data = calculate_indicators(filepath, filename, years, raw_materials=True)#, goal='total')
-
+    dmcs, dmis, rmcs, rmis, all_data, all_raw_data, all_rm_data, all_eur_data = calculate_indicators(filepath, filename, years, raw_materials=True, goal='total')#, goal='total')
+    #filepath_ab = './results/indicator1/abiotisch/'
+    dmcs_ab, dmis_ab, rmcs_ab, rmis_ab, _,_,_,_ = calculate_indicators(filepath, filename, years, raw_materials=True)
     #Save euro data, and raw material data
     all_rm_data.to_excel(f'{result_path}raw_materials_all.xlsx')
     all_eur_data.to_excel(f'{result_path}euro_data_all.xlsx')
-    final_dmis = dmis.groupby('Jaar')['DMI'].sum()
-    print(final_dmis)
-    final_dmcs = dmcs.groupby('Jaar')['DMC'].sum()
-    print(final_dmcs)
-
-    final_rmis = rmis.groupby('Jaar')['RMI'].sum()
-    print(final_rmis)
-    final_rmcs = rmcs.groupby('Jaar')['RMC'].sum()
-    print(final_rmcs)
-    visualize_results()
+    # final_dmis = dmis.groupby('Jaar')['DMI'].sum()
+    # print(final_dmis)
+    # final_dmcs = dmcs.groupby('Jaar')['DMC'].sum()
+    # print(final_dmcs)
+    #
+    # final_rmis = rmis.groupby('Jaar')['RMI'].sum()
+    # print(final_rmis)
+    # final_rmcs = rmcs.groupby('Jaar')['RMC'].sum()
+    # print(final_rmcs)
+    visualise_per_province(one_plot=True)
 
     # ______________________________________________________________________________
     #  EXPORT RESULTS
