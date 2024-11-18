@@ -113,5 +113,6 @@ if __name__ == '__main__':
     inds = ['MKI', 'CO2']
     col_names = ['MKI total (mln euro)','CO2 emissions total (kt)']
     dat = calculate_impacts(all_data_file, emissions_file, groups_file)
+    dat.to_excel('./results/indicator3/all_data.xlsx')
     for i in [0,1]:
         visualize_impacts(dat, indicator = inds[i], col_name = col_names[i], jaar = 2022)

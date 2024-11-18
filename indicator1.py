@@ -396,6 +396,7 @@ def visualise_per_province(show = False, one_plot = False):
             axs[int(j/2),j%2].set(xlim=(2015,2030))
             plot = sns.regplot(data=vals[j][vals[j]['Provincie'] == provinces[i]], x='Jaar', y=labels[j], ax=axs[int(j/2),j%2],
                                truncate=False, color=styles.cols[int(j/2)])
+            #print(vals[j][(vals[j]['Provincie'] == provinces[i]) & (vals[j]['Jaar'] == 2016)])
             plot.set_title(labels[j])
             #plot.set(xlim=(2015, 2030))
             plot.set(ylim=(0,None))
@@ -408,6 +409,11 @@ def visualise_per_province(show = False, one_plot = False):
                 plot = sns.regplot(data=ab_vals[j][ab_vals[j]['Provincie'] == provinces[i]], x='Jaar', y=labels[j],
                                    ax=axs[int(j / 2), j % 2],
                                    truncate=False, color='grey')
+                if j == 1 or j == 3:
+                    plot.hlines(
+                        y=ab_vals[j][(ab_vals[j]['Provincie'] == provinces[i]) & (ab_vals[j]['Jaar'] == 2016)][labels[j]].values[
+                              0] / 2, xmin=2015, xmax=2030,
+                        color='darkcyan', linewidth=2, linestyle='dashed')
                 plot.set_title(labels[j])
         if show:
             plt.show()
@@ -418,7 +424,7 @@ def visualise_per_province(show = False, one_plot = False):
                 text = ' Totaal'
             if one_plot:
                 text = ' Totaal en Abiotisch'
-            plt.savefig(f'{result_path}/{provinces[i]}{text}.png', dpi = 200)
+            plt.savefig(f'./results/results_per_province/{provinces[i]}/{provinces[i]}{text}.png', dpi = 200)
 # ______________________________________________________________________________
 #  NON-ADJUSTABLE PARAMETERS
 # ______________________________________________________________________________

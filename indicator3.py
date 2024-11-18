@@ -188,7 +188,7 @@ def scatter_per_province(dat, indicators, facet = False, size_col = 'relative_cr
             plt.close()
             prov_data = viz_data[viz_data['Provincie'] == prov].copy()
             fig = sns.scatterplot(prov_data, x=x_col, y=y_col, size=size_col, sizes=(10,500), hue=hue_col, alpha=0.8)
-            print(prov_data)
+            #print(prov_data)
             for i in prov_data.index:
                 print(i)
                 fig.text(prov_data['Economic Importance (EI)'][i], prov_data['Supply Risk (SR)'][i], prov_data['Materiaal'][i],
@@ -196,7 +196,8 @@ def scatter_per_province(dat, indicators, facet = False, size_col = 'relative_cr
             plt.show()
 
 def crm_province_fractions(viz_data, mat_inds, filter_endangered = False, filter_province = False, show = False, out_dir = './results/critical_raw_materials/',
-                           plot_values = True, prov='Zuid-Holland'):
+                           plot_values = True, prov='Zuid-Holland', grayed_out=False):
+    plt_legend = False if (filter_endangered or filter_province) else True
     indicators = mat_inds.sort_values(by='product', ascending=False)
     indicators = indicators[~indicators['Materiaal'].isna()]
     most_endangered = list(indicators['Materiaal'][:10])
@@ -222,10 +223,18 @@ def crm_province_fractions(viz_data, mat_inds, filter_endangered = False, filter
         viz_data = viz_data[:10]
     else:
         text = ''
+
     viz_data = viz_data.sort_values(prov, ascending=True)
     plt.rc('font', size=20)
-    fig = viz_data.plot.barh(stacked=True, color=styles.cols,
-                             figsize=(20, 10), legend=False)  # color = styles.colors_list_3)#, alpha=0.9)
+    if grayed_out:
+        cols = ['gray' for i in range(12)]
+        ind = list(viz_data.columns).index(prov)
+        cols[ind] = styles.cols[ind]
+        text += '_gray'
+    else:
+        cols = styles.cols
+    fig = viz_data.plot.barh(stacked=True, color=cols,
+                             figsize=(20, 10), legend=plt_legend)  # color = styles.colors_list_3)#, alpha=0.9)
 
     fig.set(xlim=(0,1))
     fig.set_facecolor('gainsboro')
@@ -234,7 +243,7 @@ def crm_province_fractions(viz_data, mat_inds, filter_endangered = False, filter
     if show:
         plt.show()
     else:
-        plt.savefig(out_dir + f"crm_per_provincie{text} {prov}.png", dpi=200)
+        plt.savefig(f"./results/results_per_province/{prov}/crm_per_provincie{text} {prov}.png", dpi=200)
     plt.close()
     if filter_province:
         return viz_data.index
@@ -244,6 +253,7 @@ def create_group_distribution(dat, mat_inds, prov='Zuid-Holland', filter_endange
                               most_used_mats = None):
     cols = {}
     c = 0
+
     for i in list(dat['Goederengroep'].unique()):
         cols[i] = styles.all_colors[c]
         c += 1
@@ -254,7 +264,7 @@ def create_group_distribution(dat, mat_inds, prov='Zuid-Holland', filter_endange
     viz_data = dat[dat['Provincie'] == prov]
     viz_data.index = viz_data['Goederengroep']
     viz_data = viz_data[materials[::-1]]
-    print(viz_data)
+    #print(viz_data)
 
     viz_data = viz_data / viz_data.sum()
 
@@ -292,59 +302,70 @@ def create_group_distribution(dat, mat_inds, prov='Zuid-Holland', filter_endange
     image.set(xlim=(0,1))
     plt.tight_layout()
     # plt.show()
-    plt.savefig(f'./results/critical_raw_materials/crm_distr_{prov} {text}.png', dpi=200, bbox_inches='tight')
-inds = ['Supply Risk (SR)', 'Economic Importance (EI)']
-ind_short = ['SR', 'EI']
-result_path = './results/critical_raw_materials/'
+    plt.savefig(f'./results/results_per_province/{prov}/crm_distr_{prov} {text}.png', dpi=200, bbox_inches='tight')
 
-# CALCULATE DATA
-# if not os.path.exists(result_path):
-#     os.makedirs(result_path)
-# data = calculate_crm_shares_per_province()
-# # print(data)
-# data.to_excel(result_path + 'material_contents.xlsx')
+if __name__ == '__main__':
+    inds = ['Supply Risk (SR)', 'Economic Importance (EI)']
+    ind_short = ['SR', 'EI']
+    result_path = './results/critical_raw_materials/'
 
-data = pd.read_excel(result_path + 'material_contents.xlsx')
-indicators = pd.read_excel('./data/geoFluxus/EU CRM table.xlsx')
-indicators['product'] = indicators['Economic Importance (EI)'] * indicators['Supply Risk (SR)']
-# large_crm = ['Silicazand', 'Ijzer', 'Kalksteen', 'Gips', 'Bentoniet', 'Talk', 'Aluminium']
-# basics = ['Goederengroep', 'Provincie', 'Jaar', 'Goederengroep_naam', 'NST_code', 'DMI']
-# for y in ['Economic Importance (EI)', 'Supply Risk (SR)']:
-#     scatter_per_province(data[large_crm + basics], indicators, x_col='relative_crm_content', y_col=y, facet = True)
-#     scatter_per_province(data[list(set(crm_names).difference(set(large_crm))) + basics], indicators, x_col='relative_crm_content', y_col=y, facet = True)
+    # CALCULATE DATA
+    # if not os.path.exists(result_path):
+    #     os.makedirs(result_path)
+    # data = calculate_crm_shares_per_province()
+    # # print(data)
+    # data.to_excel(result_path + 'material_contents.xlsx')
 
-# PLOT MATERIALS
-plt_indicators = indicators.copy()
-plt_indicators = plt_indicators.sort_values('product')
-plt_indicators = plt_indicators[~plt_indicators['Materiaal'].isna()]
-criticals = plt_indicators[(indicators['Economic Importance (EI)'] >= 2.8) & (indicators['Supply Risk (SR)'] >= 1)]
-materials = list(criticals['Materiaal'].dropna())
-# print(materials)
-scatter = plt_indicators.plot.scatter(x='Economic Importance (EI)', y='Supply Risk (SR)', figsize=(10,10))
-scatter.hlines(y=1, xmin = 2.8, xmax=9, color = 'red', linestyle='-', linewidth=0.5,zorder=-1)
-scatter.vlines(x=2.8, ymin=1, ymax=6, color = 'red', linestyle='-', linewidth=0.5, zorder=-1)
-change_text_loc = ['Ytterbium', 'Yttrium', 'Grafiet', 'Tantalum', 'Beryllium', 'Nikkel', 'Kalksteen', 'Kaolien', 'Gips']
-for i in plt_indicators.index:
-    offset = 0
-    if plt_indicators['Materiaal'][i] in change_text_loc:
-        print(i)
-        offset = -0.12
-    scatter.text(plt_indicators['Economic Importance (EI)'][i]+0.03, plt_indicators['Supply Risk (SR)'][i]+0.03+ offset, plt_indicators['Materiaal'][i],
-                 horizontalalignment='left', size='medium', color='black')#, weight='semibold')
-scatter.set(xlim=(0, 9), ylim = (0, 6))
-plt.tight_layout()
-#plt.show()
-plt.savefig('./results/critical_raw_materials/crms_eu.png', dpi=200)
-plt.close()
+    data = pd.read_excel(result_path + 'material_contents.xlsx')
+    indicators = pd.read_excel('./data/geoFluxus/EU CRM table.xlsx')
+    indicators['product'] = indicators['Economic Importance (EI)'] * indicators['Supply Risk (SR)']
+    # large_crm = ['Silicazand', 'Ijzer', 'Kalksteen', 'Gips', 'Bentoniet', 'Talk', 'Aluminium']
+    # basics = ['Goederengroep', 'Provincie', 'Jaar', 'Goederengroep_naam', 'NST_code', 'DMI']
+    # for y in ['Economic Importance (EI)', 'Supply Risk (SR)']:
+    #     scatter_per_province(data[large_crm + basics], indicators, x_col='relative_crm_content', y_col=y, facet = True)
+    #     scatter_per_province(data[list(set(crm_names).difference(set(large_crm))) + basics], indicators, x_col='relative_crm_content', y_col=y, facet = True)
 
-import numpy as np
+    # PLOT MATERIALS
+    plt_indicators = indicators.copy()
+    plt_indicators = plt_indicators.sort_values('product')
+    plt_indicators = plt_indicators[~plt_indicators['Materiaal'].isna()]
+    criticals = plt_indicators[(indicators['Economic Importance (EI)'] >= 2.8) & (indicators['Supply Risk (SR)'] >= 1)]
+    materials = list(criticals['Materiaal'].dropna())
+    # print(materials)
+    scatter = plt_indicators.plot.scatter(x='Economic Importance (EI)', y='Supply Risk (SR)', figsize=(14,10), fontsize=15)
+    scatter.hlines(y=1, xmin = 2.8, xmax=9, color = 'red', linestyle='-', linewidth=0.5,zorder=-1)
+    scatter.vlines(x=2.8, ymin=1, ymax=6, color = 'red', linestyle='-', linewidth=0.5, zorder=-1)
+    change_text_loc = ['Ytterbium', 'Yttrium', 'Grafiet', 'Tantalum', 'Beryllium', 'Nikkel', 'Kalksteen', 'Kaolien', 'Gips']
+    for i in plt_indicators.index:
+        offset = 0
+        if plt_indicators['Materiaal'][i] in change_text_loc:
+            print(i)
+            offset = -0.12
+        scatter.text(plt_indicators['Economic Importance (EI)'][i]+0.03, plt_indicators['Supply Risk (SR)'][i]+0.03+ offset, plt_indicators['Materiaal'][i],
+                     horizontalalignment='left', size=14, color='black')#, weight='semibold')
 
+    scatter.set(xlim=(0, 9), ylim = (0, 6))
+    scatter.set_ylabel('Supply Risk (SR)', fontsize=15)
+    scatter.set_xlabel('Economic Importance (EI)', fontsize=15)
+    plt.tight_layout()
+    #plt.show()
+    plt.savefig('./results/critical_raw_materials/crms_eu.png', dpi=200)
+    plt.close()
 
-crm_province_fractions(data, indicators, filter_endangered=True, prov='Zuid-Holland')
-mats = crm_province_fractions(data, indicators, filter_province=True, prov='Zuid-Holland')
-crm_province_fractions(data, indicators, prov='Zuid-Holland')
-# print(mats)
-# print(list(mats))
-create_group_distribution(data, indicators, filter_endangered=True, prov='Zuid-Holland')
-create_group_distribution(data, indicators, filter_province=True, prov='Zuid-Holland', most_used_mats=list(mats))
-create_group_distribution(data, indicators, prov='Zuid-Holland')
+    import numpy as np
+    #
+    provs = list(data['Provincie'].unique())
+    # for p in provs:
+    p = 'Zeeland'
+    crm_province_fractions(data, indicators, filter_endangered=True, prov=p)
+    mats = crm_province_fractions(data, indicators, filter_province=True, prov=p)
+    crm_province_fractions(data, indicators, prov=p)
+    # print(mats)
+    # print(list(mats))
+    crm_province_fractions(data, indicators, filter_endangered=True, prov=p, grayed_out=True)
+    crm_province_fractions(data, indicators, filter_province=True, prov=p, grayed_out=True)
+
+    create_group_distribution(data, indicators, filter_endangered=True, prov=p)
+    create_group_distribution(data, indicators, filter_province=True, prov=p, most_used_mats=list(mats))
+    create_group_distribution(data, indicators, prov=p)
+

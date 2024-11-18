@@ -166,8 +166,11 @@ for province in provinces:
 
     fig.update_layout(title=f'{province} {indicator}%')
     # save figure to file, and open figure in a browser
-    fig.write_image(f'{result_path}/results_per_province/{province}/{province}_sankey.png',
-                    width = 650, height=1000, scale = 2)
+    save_for_slides = './results/'
+    if not os.path.exists(f'{save_for_slides}/results_per_province/{province}/'):
+        os.makedirs(f'{save_for_slides}/results_per_province/{province}/')
+    fig.write_image(f'{save_for_slides}/results_per_province/{province}/{province}_sankey.png',
+                    width = 650, height=1000, scale = 3)
     fig.show()
 
     # OUTPUT DATA PER PROVINCE
