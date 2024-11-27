@@ -70,7 +70,17 @@ def visualize_impacts(data, result_path = 'results/indicator3/', indicator = '',
     # 'cab2d6' (purple)
     # 'ff7f00' (brown-orange)
     fig = viz_data.plot.barh(stacked=True, color = cols, fontsize=15, figsize = (14,8), legend=False)
+    for p in fig.patches:
+        width, height = p.get_width(), p.get_height()
+        x, y = p.get_xy()
+        fig.text(x + width / 2,
+                y + height / 2,
+                '{:.0f}%'.format(width*100) if width > 0.02 else '',
+                horizontalalignment='center',
+                verticalalignment='center',
+                 fontsize=12)
     fig.set_ylabel('')
+    fig.set_xticks([])
     fig.set(xlim=(0,1))
     #fig.legend(fontsize=15)
     if not os.path.exists(result_path):
@@ -104,7 +114,90 @@ def visualize_impacts(data, result_path = 'results/indicator3/', indicator = '',
     #     prov_data.to_excel(f'{export_path}/Ind.3_{province}.xlsx')
     # print(f"All results per province have been saved to {result_path}/results_per_province/")
 
+def visualize_impacts_and_DMI(data, result_path = 'results/results_per_province/', jaar = 2022, prov='Zuid-Holland'):
+    params = styles.params
+    plt.rcParams.update(params)
+    data = data[data['Jaar'] == jaar]
+    # normalise data
+    label_names = ['Milieukostenindicator', 'CO2eq uitstoot', 'Domestic Material Input']
+    col_names = ['MKI total (mln euro)', 'CO2 emissions total (kt)', 'DMI']
+    viz_data = pd.DataFrame()
+    for i in range(len(col_names)):
+        temp = data.pivot_table(index='Provincie', columns='TA', values=col_names[i],  aggfunc='sum')
+        temp = temp[temp.index == prov]
+        temp['type'] = label_names[i]
+        temp.set_index('type', inplace=True)
+        viz_data = pd.concat([viz_data, temp])
+    print(viz_data)
+    viz_data = viz_data.astype(float)
+    viz_data = viz_data.div(viz_data.sum(axis=1), axis=0)
 
+    print(viz_data.columns)
+    viz_data['Kunststoffen'] = 0
+    cols = list(viz_data.columns)
+    categories = []
+    for i in range(len(cols)):
+        if len(cols[i].split(', ')) > 1:
+            for j in cols[i].split(', '):
+                viz_data[j] += 0.5 * viz_data[cols[i]]
+        else:
+            categories.append(cols[i])
+    viz_data = viz_data[categories]
+    viz_data.rename(columns={'Bouw': 'Bouwmaterialen','Non-specifiek': 'Overig'}, inplace=True)
+    print(viz_data.columns)
+    viz_data = viz_data[['Biomassa en voedsel',
+                 'Kunststoffen',
+                 'Bouwmaterialen',
+                 'Consumptiegoederen',
+                 'Overig',
+                 'Maakindustrie']]
+
+    # cols = {
+    #     'Biomassa en voedsel':styles.cols[4],
+    #     'Kunststoffen':styles.cols[5],
+    #     'Bouwmaterialen':styles.cols[7],
+    #     'Consumptiegoederen':styles.cols[2],
+    #     'Overig':styles.cols[1],
+    #     'Maakindustrie':styles.cols[0]
+    # }
+    cols = {
+        'Biomassa en voedsel':'#a6cee3',
+        'Kunststoffen':'#b2df8a',
+        'Bouwmaterialen':'#fb9a99',
+        'Consumptiegoederen':'#fdbf6f',
+        'Overig':'#cab2d6',
+        'Maakindustrie': '#ff7f00'
+    }
+    # 'a6cee3' (light blue)
+    # 'b2df8a' (light green)
+    # 'fb9a99' (light pink)
+    # 'fdbf6f' (orange)
+    # 'cab2d6' (purple)
+    # 'ff7f00' (brown-orange)
+    fig = viz_data.plot.barh(stacked=True, color = cols, fontsize=15, figsize = (14,3), legend=False)
+    for p in fig.patches:
+        width, height = p.get_width(), p.get_height()
+        x, y = p.get_xy()
+        fig.text(x + width / 2,
+                y + height / 2,
+                '{:.0f}%'.format(width*100) if width > 0.02 else '',
+                horizontalalignment='center',
+                verticalalignment='center',
+                 fontsize=12)
+    fig.set_ylabel('')
+    fig.set_xticks([])
+    fig.set(xlim=(0,1))
+    #fig.legend(fontsize=15)
+    if not os.path.exists(result_path):
+        os.makedirs(result_path)
+        print(f"All results will be saved in the directory {result_path}")
+    plt.tight_layout()
+    # if you leave this line uncommented, an image will be rendered on screen but not saved in a file
+    # plt.show()
+    plt.savefig(f'{result_path}/{prov}/{prov}_alle_indicators_per_TA_{jaar}.svg')
+    plt.savefig(f'{result_path}/{prov}/{prov}_alle_indicators_per_TA_{jaar}.png')
+    #
+    data.to_excel(f'{result_path}/{prov}/{prov}_alle_indicators_per_TA_percentage.xlsx')
 
 if __name__ == '__main__':
     all_data_file = './results/indicator1/all_data.xlsx'
@@ -115,4 +208,7 @@ if __name__ == '__main__':
     dat = calculate_impacts(all_data_file, emissions_file, groups_file)
     dat.to_excel('./results/indicator3/all_data.xlsx')
     for i in [0,1]:
-        visualize_impacts(dat, indicator = inds[i], col_name = col_names[i], jaar = 2022)
+        visualize_impacts(dat, indicator = inds[i], col_name = col_names[i], jaar = 2022, result_path = './results/results_per_province/')
+
+    for i in list(dat['Provincie'].unique()):
+        visualize_impacts_and_DMI(dat, prov=i)

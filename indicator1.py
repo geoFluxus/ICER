@@ -391,13 +391,16 @@ def visualise_per_province(show = False, one_plot = False):
         vals[i] = vals[i].groupby(['Provincie', 'Jaar']).sum().reset_index()
     for i in range(len(provinces)):
         plt.close()
-        fig, axs = plt.subplots(nrows=2, ncols=2, sharey='row', figsize=(12, 12))
+        fig, axs = plt.subplots(nrows=2, ncols=2, sharey='row', figsize=(13, 13), constrained_layout=True)
         for j in range(len(vals)):
             axs[int(j/2),j%2].set(xlim=(2015,2030))
             plot = sns.regplot(data=vals[j][vals[j]['Provincie'] == provinces[i]], x='Jaar', y=labels[j], ax=axs[int(j/2),j%2],
                                truncate=False, color=styles.cols[int(j/2)])
             #print(vals[j][(vals[j]['Provincie'] == provinces[i]) & (vals[j]['Jaar'] == 2016)])
-            plot.set_title(labels[j])
+            #plot.set_title(labels[j])
+            axs[int(j / 2), j % 2].set_ylabel(labels[j] + ' (kton)', fontsize=13)
+            if j%2 == 1:
+                axs[int(j/2),j%2].yaxis.set_tick_params(labelleft=True)
             #plot.set(xlim=(2015, 2030))
             plot.set(ylim=(0,None))
         # results = regression(sns.regplot, fig, "Jaar", val, truncate=False)
@@ -414,7 +417,9 @@ def visualise_per_province(show = False, one_plot = False):
                         y=ab_vals[j][(ab_vals[j]['Provincie'] == provinces[i]) & (ab_vals[j]['Jaar'] == 2016)][labels[j]].values[
                               0] / 2, xmin=2015, xmax=2030,
                         color='darkcyan', linewidth=2, linestyle='dashed')
-                plot.set_title(labels[j])
+
+                axs[int(j / 2), j % 2].set_ylabel(labels[j] + ' (kton)', fontsize=13)
+                #plot.set_title(labels[j])
         if show:
             plt.show()
         else:
@@ -424,6 +429,7 @@ def visualise_per_province(show = False, one_plot = False):
                 text = ' Totaal'
             if one_plot:
                 text = ' Totaal en Abiotisch'
+            plt.tight_layout()
             plt.savefig(f'./results/results_per_province/{provinces[i]}/{provinces[i]}{text}.png', dpi = 200)
 # ______________________________________________________________________________
 #  NON-ADJUSTABLE PARAMETERS

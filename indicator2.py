@@ -143,11 +143,11 @@ for province in provinces:
     data = viz_data[viz_data['province'] == province]
     total = data['amount'].sum()
     alternative = data[data['current_rank'] != data['alt_rank']]['amount'].sum()
-
+    storage = 100* data[data['current_rank'] == 'I']['amount'].sum() / data['amount'].sum()
     # computer the percentage of waste that has better alternatives
     indicator = round(alternative / total * 100, 2)
-    print(f'{province}: {indicator}% improvement potential')
-
+    #print(f'{province}: {indicator}% improvement potential')
+    print(f'{province}: {storage}% opslag')
     # create dimensions
     current_rank_dim = go.parcats.Dimension(values=data.current_rank,
                                             categoryorder='category ascending',

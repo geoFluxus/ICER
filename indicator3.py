@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import styles
 import os
-
+from matplotlib.gridspec import GridSpec
 
 # # ______________________________________________________________________________
 # #  READ RELEVANT DATASETS
@@ -79,7 +79,7 @@ def calculate_crm_shares_per_province():
 
     for i in crm_names:
         crm_in_goods[i] = crm_in_goods[i].astype(float) * crm_in_goods['good_distribution_per_nst']
-
+    crm_in_goods.to_excel(result_path + 'goods_crm_fractions.xlsx')
     crm_per_nst_code = crm_in_goods.groupby('NST2007_CODE')[crm_names].sum()
     #print(crm_per_nst_code)
     crm_per_nst_code.to_excel(result_path + 'crm_fractions.xlsx')
@@ -102,6 +102,18 @@ def calculate_crm_shares_per_province():
     crm_per_province[crm_per_province.isna()] = 0
     for i in crm_names:
         crm_per_province[i] = crm_per_province[i] * crm_per_province['DMI'] # now in TONNES (g/kg * mln kg)
+    print(crm_per_province.columns)
+    agg_dict = {
+        'Goederengroep_naam': 'first',
+        'NST_code': 'first',
+        'Goederengroep': 'first',
+        'Provincie': 'first',
+        'Jaar': 'first'
+    }
+    for col in crm_per_province.columns:
+        if col not in agg_dict:
+            agg_dict[col] = 'sum'
+    crm_per_province = crm_per_province.groupby(['Goederengroep', 'Provincie', 'Jaar'], as_index=False).agg(agg_dict)
 
     return crm_per_province
 
@@ -265,7 +277,6 @@ def create_group_distribution(dat, mat_inds, prov='Zuid-Holland', filter_endange
     viz_data.index = viz_data['Goederengroep']
     viz_data = viz_data[materials[::-1]]
     #print(viz_data)
-
     viz_data = viz_data / viz_data.sum()
 
     viz_data = viz_data.T
@@ -304,6 +315,202 @@ def create_group_distribution(dat, mat_inds, prov='Zuid-Holland', filter_endange
     # plt.show()
     plt.savefig(f'./results/results_per_province/{prov}/crm_distr_{prov} {text}.png', dpi=200, bbox_inches='tight')
 
+def plot_heatmap(dat, mat_inds, prov='Zuid-Holland', filter_endangered = False, filter_province = False,
+                 indicative = True, values = None):
+    indicators = mat_inds[mat_inds['Materiaal'].isin(materials)]
+    indicators = indicators.sort_values(by='product', ascending=False)
+    indicators = indicators[~indicators['Materiaal'].isna()]
+    if values is not None:
+        values = values.sort_values(by='Inkoop_waarde', ascending=True)
+    viz_data = dat[dat['Provincie'] == prov]
+    viz_data.index = viz_data['Goederengroep']
+    viz_data = viz_data[list(indicators['Materiaal'])]
+    viz_data = viz_data[viz_data.sum(axis=1) != 0]
+    # if filter_critical:
+    #     viz_data = viz_data[materials[::-1]]
+    #     print(materials)
+    viz_data = viz_data / viz_data.sum()
+    height = 12 if not filter_province else 8
+    fig = plt.figure(figsize=(20, height))
+    ncols, width_ratios = (2, [1,0.05]) if values is None else (3, [0.2,1,0.05])
+    gs = GridSpec(2, ncols, height_ratios=[4,  1], width_ratios=width_ratios)
+    if values is None:
+        viz_data = viz_data.loc[viz_data.sum(axis=1).sort_values(ascending=True).index]
+    else:
+        values = values[(values['Provincie'] == prov) & (values['Goederengroep'].isin(viz_data.index))]
+        viz_data = pd.merge(viz_data, values[values['Provincie'] == prov][['Goederengroep','Inkoop_waarde']],
+                            on= 'Goederengroep', how='left')
+        viz_data = viz_data.sort_values(by='Inkoop_waarde', ascending=True)
+        viz_data.drop('Inkoop_waarde', axis=1, inplace=True)
+        #print(viz_data.columns)
+    # Create subplots for bar chart, heatmap, and colorbar
+    if values is not None:
+        ax_money = fig.add_subplot(gs[0,0])
+        offset = 1
+    else:
+        offset = 0
+    ax_bar = fig.add_subplot(gs[1, 0+offset])  # Bar chart
+    ax_heatmap = fig.add_subplot(gs[0, 0+offset])  # Heatmap
+    if not indicative:
+        ax_cbar = fig.add_subplot(gs[0, 1+offset])  # Colorbar subplot
+    if indicative:
+        viz_data[viz_data != 0] = 1
+    if filter_province:
+        viz_data = viz_data[-10:]
+        if values is not None:
+            values = values[-10:]
+
+    if values is not None:
+        viz_data.set_index('Goederengroep', inplace=True)
+        # Plot the bar chart
+        # print(values)
+        # print(values.sum())
+    sns.barplot(x=indicators['Materiaal'],
+                y=indicators['product'], ax=ax_bar, color='mediumseagreen')
+    if values is not None:
+        sns.barplot(y=viz_data.index,
+                    x=values['Inkoop_waarde'], ax=ax_money, color='gold')
+    ax_bar.set_xlabel('Materiaal', fontsize=15)
+    ax_bar.set_ylabel('Kritikaliteit', fontsize=15)
+    ax_bar.set_xticks(range(len(indicators['Materiaal'])), indicators['Materiaal'], fontsize=15)
+    ax_bar.set_yticklabels(ax_bar.get_yticklabels(), fontsize=15)
+    ax_bar.tick_params(axis='x', which='both', bottom=False, rotation=90)
+
+    # Plot the heatmap
+    if not indicative:
+        #print(viz_data)
+        sns.heatmap(viz_data * 100, cmap="Oranges", ax=ax_heatmap, cbar_ax=ax_cbar, cbar_kws={"orientation": "vertical"},
+                    linecolor='w', linewidth=1, mask=viz_data==0)
+    else:
+        sns.heatmap(viz_data * 100, cmap='Oranges', ax=ax_heatmap, cbar=False,
+                    linecolor='w', linewidth=1, mask=viz_data==0, vmin=0, vmax=1.8)
+    ax_heatmap.set_xticks([])
+    ax_heatmap.set_ylabel('Goederengroep', fontsize=15)
+    ax_heatmap.set_yticklabels(ax_heatmap.get_yticklabels(), fontsize=15)
+
+    if values is not None:
+        ax_heatmap.set_yticks([])
+        ax_money.set_yticklabels(ax_money.get_yticklabels(), fontsize=15)
+        #ax_money.xaxis.set_tick_params(fontsize=15)
+        ax_heatmap.set_ylabel('')
+        ax_money.set_ylabel('Goederengroep', fontsize=15)
+        ax_money.set_xlabel('Invoer waarde (mln €)', fontsize=15)
+        ax_money.spines['top'].set_visible(False)
+        ax_money.spines['right'].set_visible(False)
+        ax_money.spines['bottom'].set_visible(False)
+        ax_money.spines['left'].set_visible(False)
+    # ax_bar.xaxis.set_visible(False)
+    # ax_bar.yaxis.set_visible(False)
+    if not indicative:
+        ax_cbar.set_ylabel('Kritieke grondstoffen\n per goederengroep (%)', fontsize=15)
+        ax_cbar.invert_yaxis()  # This is the key method.
+    ax_bar.spines['top'].set_visible(False)
+    ax_bar.spines['right'].set_visible(False)
+    ax_bar.spines['bottom'].set_visible(False)
+    ax_bar.spines['left'].set_visible(False)
+    #ax_heatmap.tick_params(fontsize=15)
+    plt.subplots_adjust(hspace=0.01, wspace=0.02)
+    # Adjust layout to make everything fit neatly
+    plt.tight_layout()
+
+    text = ''
+    if values is not None: text += 'euros'
+    if filter_province: text += 'filtered'
+    plt.savefig(f'./results/results_per_province/{prov}/heatmap {prov} {text}.png', dpi=200)
+    #plt.show()
+    if filter_province and values is None:
+        return list(viz_data.index)
+
+
+def goederen_province_fractions(values, filter_endangered = False, filter_province = False, show = False, out_dir = './results/critical_raw_materials/',
+                           plot_values = True, prov='Zuid-Holland', grayed_out=True,
+                                filter_groups = None, plt_legend=True):
+    #values = values[values['Jaar'] == 2022]
+    viz_data = values.groupby(['Provincie','Goederengroep'], as_index=False).sum()
+    viz_data = viz_data.pivot(index='Provincie', columns='Goederengroep', values='Inkoop_waarde')
+    viz_data = viz_data / viz_data.sum()
+    viz_data = viz_data.T
+    viz_data = viz_data[viz_data.sum(0).sort_values(ascending=False).index]
+
+    viz_data = viz_data.T
+    text = ''
+    if filter_groups is not None:
+        viz_data = viz_data[filter_groups[::-1]]
+        text += ' gefilterd'
+    viz_data = viz_data.T
+
+    #viz_data = viz_data.sort()
+    # if filter_endangered:
+    #     viz_data = viz_data[viz_data.index.isin(most_endangered)]
+    #     text = '_gefilterd_most_critical'
+    # elif filter_province:
+    #     text = '_gefilterd_belangrijkst'
+    #     viz_data = viz_data.sort_values(prov, ascending=False)
+    #     viz_data = viz_data[:10]
+    # else:
+    #     text = ''
+    #
+    # viz_data = viz_data.sort_values(prov, ascending=True)
+    # plt.rc('font', size=20)
+    # if grayed_out:
+    #     cols = ['gray' for i in range(12)]
+    #     ind = list(viz_data.columns).index(prov)
+    #     cols[ind] = styles.cols[ind]
+    #     text += '_gray'
+    # else:
+    #     cols = styles.cols
+
+    if grayed_out:
+        cols = ['gray' for i in range(12)]
+        ind = list(viz_data.columns).index(prov)
+        cols[0] = styles.cols[0] #or cols[ind] for different colors
+        text += '_gray'
+        column = viz_data[prov]
+
+        #move province of to the first column
+        viz_data.drop(labels=[prov], axis=1, inplace=True)
+        viz_data.insert(0, prov, column)
+    else:
+        cols = styles.cols
+
+    fig = viz_data.plot.barh(stacked=True, color=cols,
+                             figsize=(20, 10), legend=plt_legend)  # color = styles.colors_list_3)#, alpha=0.9)
+
+    fig.set(xlim=(0,1))
+    fig.set_facecolor('gainsboro')
+
+    ind = 0
+    for p in fig.patches:
+        width, height = p.get_width(), p.get_height()
+        if grayed_out:
+            print_val = True if int(ind / 10) == 0 else False
+        else:
+            print_val = True
+        x, y = p.get_xy()
+        fig.text(x + width / 2,
+                y + height / 2,
+                '{:.0f}%'.format(width*100) if (width > 0.01 and print_val) else '',
+                horizontalalignment='center',
+                verticalalignment='center',
+                 fontsize=12)
+        ind +=1
+    fig.set_yticks(range(len(viz_data.index)), viz_data.index, fontsize=15)
+    fig.set_xticks([])
+    fig.set_ylabel('Goederengroep', fontsize=15)
+    if plt_legend:
+        fig.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.tight_layout()
+    print(show)
+    if show:
+        plt.show()
+    else:
+        print('saving image')
+        plt.savefig(f"W:/Shared With Me/MASTER/PROJECTS/IPO/ICER 2024/results_per_province/{prov}/goederen_per_provincie{text} {prov}.png", dpi=200)
+    plt.close()
+    if filter_province:
+        return viz_data.index
+
+
 if __name__ == '__main__':
     inds = ['Supply Risk (SR)', 'Economic Importance (EI)']
     ind_short = ['SR', 'EI']
@@ -332,40 +539,53 @@ if __name__ == '__main__':
     criticals = plt_indicators[(indicators['Economic Importance (EI)'] >= 2.8) & (indicators['Supply Risk (SR)'] >= 1)]
     materials = list(criticals['Materiaal'].dropna())
     # print(materials)
-    scatter = plt_indicators.plot.scatter(x='Economic Importance (EI)', y='Supply Risk (SR)', figsize=(14,10), fontsize=15)
-    scatter.hlines(y=1, xmin = 2.8, xmax=9, color = 'red', linestyle='-', linewidth=0.5,zorder=-1)
-    scatter.vlines(x=2.8, ymin=1, ymax=6, color = 'red', linestyle='-', linewidth=0.5, zorder=-1)
-    change_text_loc = ['Ytterbium', 'Yttrium', 'Grafiet', 'Tantalum', 'Beryllium', 'Nikkel', 'Kalksteen', 'Kaolien', 'Gips']
-    for i in plt_indicators.index:
-        offset = 0
-        if plt_indicators['Materiaal'][i] in change_text_loc:
-            print(i)
-            offset = -0.12
-        scatter.text(plt_indicators['Economic Importance (EI)'][i]+0.03, plt_indicators['Supply Risk (SR)'][i]+0.03+ offset, plt_indicators['Materiaal'][i],
-                     horizontalalignment='left', size=14, color='black')#, weight='semibold')
+    plot_scatter = False
+    if plot_scatter:
+        scatter = plt_indicators.plot.scatter(x='Economic Importance (EI)', y='Supply Risk (SR)', figsize=(14,10), fontsize=15)
+        scatter.hlines(y=1, xmin = 2.8, xmax=9, color = 'red', linestyle='-', linewidth=0.5,zorder=-1)
+        scatter.vlines(x=2.8, ymin=1, ymax=6, color = 'red', linestyle='-', linewidth=0.5, zorder=-1)
+        change_text_loc = ['Ytterbium', 'Yttrium', 'Grafiet', 'Tantalum', 'Beryllium', 'Nikkel', 'Kalksteen', 'Kaolien', 'Gips']
+        for i in plt_indicators.index:
+            offset = 0
+            if plt_indicators['Materiaal'][i] in change_text_loc:
+                offset = -0.12
+            scatter.text(plt_indicators['Economic Importance (EI)'][i]+0.03, plt_indicators['Supply Risk (SR)'][i]+0.03+ offset, plt_indicators['Materiaal'][i],
+                         horizontalalignment='left', size=14, color='black')#, weight='semibold')
 
-    scatter.set(xlim=(0, 9), ylim = (0, 6))
-    scatter.set_ylabel('Supply Risk (SR)', fontsize=15)
-    scatter.set_xlabel('Economic Importance (EI)', fontsize=15)
-    plt.tight_layout()
-    #plt.show()
-    plt.savefig('./results/critical_raw_materials/crms_eu.png', dpi=200)
-    plt.close()
+        scatter.set(xlim=(0, 9), ylim = (0, 6))
+        scatter.set_ylabel('Supply Risk (SR)', fontsize=15)
+        scatter.set_xlabel('Economic Importance (EI)', fontsize=15)
+        plt.tight_layout()
+        #plt.show()
+        plt.savefig('./results/critical_raw_materials/crms_eu.png', dpi=200)
+        plt.close()
 
     import numpy as np
     #
     provs = list(data['Provincie'].unique())
+    euro_waarde = pd.read_excel('./results/indicator1/euro_data_all.xlsx')
     # for p in provs:
-    p = 'Zeeland'
-    crm_province_fractions(data, indicators, filter_endangered=True, prov=p)
-    mats = crm_province_fractions(data, indicators, filter_province=True, prov=p)
-    crm_province_fractions(data, indicators, prov=p)
-    # print(mats)
-    # print(list(mats))
-    crm_province_fractions(data, indicators, filter_endangered=True, prov=p, grayed_out=True)
-    crm_province_fractions(data, indicators, filter_province=True, prov=p, grayed_out=True)
-
-    create_group_distribution(data, indicators, filter_endangered=True, prov=p)
-    create_group_distribution(data, indicators, filter_province=True, prov=p, most_used_mats=list(mats))
-    create_group_distribution(data, indicators, prov=p)
+    p = 'Zuid-Holland'
+    euro_waarde = euro_waarde[euro_waarde['Jaar'] == 2022]
+    euro_waarde['Inkoop_waarde'] = euro_waarde['Invoer_nationaal'] + euro_waarde['Invoer_internationaal']
+    euros = euro_waarde[['Provincie', 'Goederengroep','Inkoop_waarde']]
+    for p in provs:
+        for i in [True, False]:
+            plot_heatmap(data, indicators, prov=p, indicative=False, filter_province=i, values=euros)
+            if not i:
+                plot_heatmap(data, indicators, prov=p, indicative=False, filter_province=i)
+        groups = plot_heatmap(data, indicators, prov=p, indicative=False, filter_province=True)
+        goederen_province_fractions(euros, show=False, grayed_out=True, filter_groups=groups, plt_legend=False,
+                                    prov=p)
+    # crm_province_fractions(data, indicators, filter_endangered=True, prov=p)
+    # mats = crm_province_fractions(data, indicators, filter_province=True, prov=p)
+    # crm_province_fractions(data, indicators, prov=p)
+    # # print(mats)
+    # # print(list(mats))
+    # crm_province_fractions(data, indicators, filter_endangered=True, prov=p, grayed_out=True)
+    # crm_province_fractions(data, indicators, filter_province=True, prov=p, grayed_out=True)
+    #
+    # create_group_distribution(data, indicators, filter_endangered=True, prov=p)
+    # create_group_distribution(data, indicators, filter_province=True, prov=p, most_used_mats=list(mats))
+    # create_group_distribution(data, indicators, prov=p)
 
