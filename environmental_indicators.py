@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import styles
 import os
+import numpy as np
 
 def calculate_impacts(data_file='', impact_file='', group_relation_file=''):
     data = pd.read_excel(data_file)
@@ -199,6 +200,57 @@ def visualize_impacts_and_DMI(data, result_path = 'results/results_per_province/
     #
     data.to_excel(f'{result_path}/{prov}/{prov}_alle_indicators_per_TA_percentage.xlsx')
 
+def visualize_heatmap(data, result_path = 'results/results_per_province/', jaar = 2022, prov='Friesland', year=2022,
+                      percents=True, filter_groups=None):
+    label_names = ['Milieukostenindicator', 'CO2eq uitstoot', 'Domestic Material Input']
+    col_names = ['MKI total (mln euro)', 'CO2 emissions total (kt)', 'DMI']
+    goods = list(data['Goederengroep'].unique())
+    provinces = list(data['Provincie'].unique())
+    data = data[data['Jaar'] == jaar]
+    results = np.zeros((len(goods), len(provinces)))
+    if percents:
+        tots = data.groupby('Provincie')[col_names[0]].sum()
+        tots.rename('Total', inplace=True)
+        print(tots)
+        data = pd.merge(data, tots, how='left', on='Provincie')
+        data[col_names[0]] = data[col_names[0]] / data['Total']
+    for i in range(len(provinces)):
+        for j in range(len(goods)):
+            results[j,i] = data[(data['Provincie'] == provinces[i]) &
+                                (data['Goederengroep'] == goods[j])][col_names[0]].values[0]
+    viz_data = pd.DataFrame(data=results, columns=provinces, index=goods)
+
+    if filter_groups is not None:
+        viz_data = viz_data[-filter_groups:]
+    viz_data = viz_data.sort_values(by=prov)
+    fig, ax_heatmap = plt.subplots(figsize = (23,26))
+    # Plot the heatmap
+        # print(viz_data)
+    sns.heatmap(viz_data, cmap="Oranges", ax=ax_heatmap,
+                cbar_kws={"orientation": "vertical"},
+                linecolor='w', linewidth=1, mask=viz_data == 0, annot=True, annot_kws={'fontsize': 15})
+    #ax_heatmap.set_xticks([])
+    ax_heatmap.set_ylabel('Provincie', fontsize=17)
+    ax_heatmap.set_xticklabels(ax_heatmap.get_xticklabels(), fontsize=17, rotation=90)
+    ax_heatmap.set_ylabel('Goederengroep', fontsize=17)
+    ax_heatmap.set_yticklabels(ax_heatmap.get_yticklabels(), fontsize=17)
+
+
+    # if not indicative:
+    #     ax_cbar.set_ylabel('Kritieke grondstoffen\n per goederengroep (%)', fontsize=15)
+    #     ax_cbar.invert_yaxis()  # This is the key method.
+    # ax_heatmap.tick_params(fontsize=15)
+    plt.subplots_adjust(hspace=0.01, wspace=0.02)
+    # Adjust layout to make everything fit neatly
+    plt.tight_layout()
+
+    # text = ''
+    # if filter_province: text += 'filtered'
+    plt.savefig(f'./results/results_per_province/{prov}/{label_names[0]} heatmap {prov}.png', dpi=200)
+    #plt.show()
+
+
+    return
 if __name__ == '__main__':
     all_data_file = './results/indicator1/all_data.xlsx'
     emissions_file = './data/TNO/environmental_indicators.xlsx'
@@ -207,8 +259,9 @@ if __name__ == '__main__':
     col_names = ['MKI total (mln euro)','CO2 emissions total (kt)']
     dat = calculate_impacts(all_data_file, emissions_file, groups_file)
     dat.to_excel('./results/indicator3/all_data.xlsx')
-    for i in [0,1]:
-        visualize_impacts(dat, indicator = inds[i], col_name = col_names[i], jaar = 2022, result_path = './results/results_per_province/')
-
-    for i in list(dat['Provincie'].unique()):
-        visualize_impacts_and_DMI(dat, prov=i)
+    visualize_heatmap(dat)
+    # for i in [0,1]:
+    #     visualize_impacts(dat, indicator = inds[i], col_name = col_names[i], jaar = 2022, result_path = './results/results_per_province/')
+    #
+    # for i in list(dat['Provincie'].unique()):
+    #     visualize_impacts_and_DMI(dat, prov=i)

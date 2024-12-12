@@ -35,7 +35,7 @@ def calculate_crm_shares_per_province():
     good_weights = pd.read_excel('data/TNO/CN_goederen_totalen_2020.xlsx', sheet_name='Goederen_totalen_2020')
     good_weights = good_weights[['CN_8D', 'Final_count_kg']]
     good_weights['CN_8D'] = good_weights['CN_8D'].astype(str)
-
+    print(len(good_weights), 'Good weights 1')
     cn_to_nst_code = pd.read_excel('data/geoFluxus/NST2007_CN2020_Table.xlsx')
     cn_to_nst_code = cn_to_nst_code[[cn_code_col, 'NST2007_CODE']]
     cn_to_nst_code[cn_code_col] = cn_to_nst_code[cn_code_col].str.replace(' ', '')
@@ -48,16 +48,18 @@ def calculate_crm_shares_per_province():
 
     good_weights = pd.merge(good_weights, cn_to_nst_code, how='left', left_on='CN_8D', right_on=cn_code_col).drop(columns=cn_code_col)
     cn_code_col = 'CN_8D'
+    print(len(good_weights), 'Good weights 2')
     # print(good_weights['Final_count_kg'].sum())
     # print(good_weights['Final_count_kg'][good_weights['CN_8D'].isna() | good_weights[cn_code_col].isna()].sum())
     good_weights['Final_count_kg'][good_weights['Final_count_kg'].isna()] = 0
 
     cbs_names_to_nst = pd.read_excel('./data/geoFluxus/CBS_names.xlsx', sheet_name='CBS_code_merger')
     cbs_names_to_nst = cbs_names_to_nst[['Goederengroep_naam', 'NST_code']]
-    print(cbs_names_to_nst)
+    #print(cbs_names_to_nst)
     nst_total_weights = good_weights.groupby('NST2007_CODE')['Final_count_kg'].sum()
     nst_total_weights.name = 'total_weight_per_nst_code'
     good_weights = pd.merge(good_weights, nst_total_weights, how='left', left_on='NST2007_CODE', right_index=True)
+    print(len(good_weights), 'Good weights 3')
     #print(good_weights.columns)
     # print(good_weights.columns)
     # print(good_weights['Final_count_kg'][good_weights['NST2007_CODE']=='01.8'].sum())
@@ -66,6 +68,7 @@ def calculate_crm_shares_per_province():
     good_weights['good_distribution_per_nst'][good_weights['good_distribution_per_nst'].isna()] = 0
 
     good_weights = good_weights[~good_weights['NST2007_CODE'].isna()]
+    print(len(good_weights), 'Good weights 4')
     # for i in good_weights['NST2007_CODE'].unique():
     #     if good_weights['good_distribution_per_nst'][good_weights['NST2007_CODE'] == i].sum() != 1:
     #         print(i, good_weights['good_distribution_per_nst'][good_weights['NST2007_CODE'] == i].sum())
@@ -74,6 +77,7 @@ def calculate_crm_shares_per_province():
 
     crm_in_goods = pd.merge(good_weights, crm_contents, how='left', left_on=cn_code_col, right_on='gn_code')
     crm_in_goods[crm_in_goods.isna()] = 0
+    print(len(crm_in_goods), 'Good weights 5 with crm')
     #print(crm_in_goods.columns)
 
 
@@ -517,11 +521,11 @@ if __name__ == '__main__':
     result_path = './results/critical_raw_materials/'
 
     # CALCULATE DATA
-    # if not os.path.exists(result_path):
-    #     os.makedirs(result_path)
-    # data = calculate_crm_shares_per_province()
-    # # print(data)
-    # data.to_excel(result_path + 'material_contents.xlsx')
+    if not os.path.exists(result_path):
+        os.makedirs(result_path)
+    data = calculate_crm_shares_per_province()
+    # print(data)
+    data.to_excel(result_path + 'material_contents.xlsx')
 
     data = pd.read_excel(result_path + 'material_contents.xlsx')
     indicators = pd.read_excel('./data/geoFluxus/EU CRM table.xlsx')

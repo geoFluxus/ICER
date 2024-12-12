@@ -65,8 +65,41 @@ r"Stadsgewest ’s-Hertogenbosch": 'Noord-Brabant',
 'Noordoostpolder en Urk': "Flevoland"
 }
 
+def correct_data_gaps(data):
+    # Filter the missing data for year 2022 and Suikerbieten
+    print(data.columns)
+    #print(data)
+    missing_data = [data[(data["Jaar"] == 2022) & (data["Goederengroep_naam"] == "Suikerbieten")],
+                    data[(data["Jaar"] == 2015) & (data["Goederengroep_naam"] == "Rauwe melk van runderen, schapen en geiten")],
+                    data[(data["Jaar"] == 2022) &
+                         (data["Goederengroep_naam"] == "Ruwe aardolie") &
+                         (data['Provincienaam'].isin(['Zuid-Holland', 'Noord-Brabant']))],
 
-def run(data, filename, corop=False):
+                    ]
+
+
+    # Loop through each missing entry and fill it with the previous year's value
+    for dat in missing_data:
+        for index, row in dat.iterrows():
+            # Find the previous year's value for the same region and good group
+            year = 2021 if row['Jaar'] == 2022 else 2016
+            previous_year_value = data[
+                (data["Jaar"] == year) &
+                (data["Provincienaam"] == row["Provincienaam"]) &
+                (data["Goederengroep_naam"] == row["Goederengroep_naam"]) &
+                 (data['Stroom'] == row['Stroom'])
+                ][['Brutogew', 'Sf_brutogew', 'Waarde', 'Sf_waarde']].values
+
+            # If a previous year value exists, update the missing value
+            vals = ['Brutogew', 'Sf_brutogew', 'Waarde', 'Sf_waarde']
+            if len(previous_year_value) > 0:
+                for i in range(len(vals)):
+                    data.at[index, vals[i]] = previous_year_value[0][i]
+    print(data)
+
+    return data
+
+def run(data, filename, corop=False, fill_data_gaps=False):
 
     # filter out totals from the gebruiksgroep_naam, group by
     data = data[data['Gebruiksgroep_naam'] != 'Totaal']
@@ -87,13 +120,19 @@ def run(data, filename, corop=False):
             data[i] = data[i].astype(float)
         data['Provincienaam'] = data['Regionaam'].apply(lambda x: corop_to_province[x])
         data = data.drop(columns=['Stroom_nr', 'Regionr', 'Gebruiksgroep_nr', 'Gebruiksgroep_naam'])
+
+
     # group by
     data = data.groupby(['Jaar', 'Stroom', 'Provincienaam', 'Goederengroep_nr', 'Goederengroep_naam']).sum().reset_index()
 
+    if fill_data_gaps:
+        data = correct_data_gaps(data)
     cols = {'gewicht': ['Brutogew', 'Sf_brutogew'],
             'waarde': ['Waarde', 'Sf_waarde']}
+    text = ' Aangepast' if fill_data_gaps else ''
+
     # Create an Excel writer object
-    with pd.ExcelWriter(f'data/{filename}.xlsx', engine='openpyxl') as writer:
+    with pd.ExcelWriter(f'data/{filename}{text}.xlsx', engine='openpyxl') as writer:
         no = 0
         letter = 'b'
         # split data in data sheets according to the format
@@ -155,7 +194,7 @@ def run(data, filename, corop=False):
 
 if __name__ == '__main__':
     filepath = 'data/'
-    filename = 'CBS/181024 Tabel Regionale stromen 2015-2022 provincie CE67 GC6'
+    filename = 'CBS/041224 Tabel Regionale stromen 2015-2022 provincie CE67 GC6'
 
     all_data = pd.read_csv(filepath + filename +'.csv', delimiter=';', decimal=',', encoding='cp1252')
-    run(all_data, filename)
+    run(all_data, filename, fill_data_gaps=True)
