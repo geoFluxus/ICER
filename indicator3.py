@@ -592,4 +592,3 @@ if __name__ == '__main__':
     # create_group_distribution(data, indicators, filter_endangered=True, prov=p)
     # create_group_distribution(data, indicators, filter_province=True, prov=p, most_used_mats=list(mats))
     # create_group_distribution(data, indicators, prov=p)
-

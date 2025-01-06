@@ -69,14 +69,16 @@ def correct_data_gaps(data):
     # Filter the missing data for year 2022 and Suikerbieten
     print(data.columns)
     #print(data)
-    missing_data = [data[(data["Jaar"] == 2022) & (data["Goederengroep_naam"] == "Suikerbieten")],
-                    data[(data["Jaar"] == 2015) & (data["Goederengroep_naam"] == "Rauwe melk van runderen, schapen en geiten")],
-                    data[(data["Jaar"] == 2022) &
-                         (data["Goederengroep_naam"] == "Ruwe aardolie") &
-                         (data['Provincienaam'].isin(['Zuid-Holland', 'Noord-Brabant']))],
-
+    # missing_data = [data[(data["Jaar"] == 2022) & (data["Goederengroep_naam"] == "Suikerbieten")],
+    #                 data[(data["Jaar"] == 2015) & (data["Goederengroep_naam"] == "Rauwe melk van runderen, schapen en geiten")],
+    #                 data[(data["Jaar"] == 2022) &
+    #                      (data["Goederengroep_naam"] == "Ruwe aardolie") &
+    #                      (data['Provincienaam'].isin(['Zuid-Holland', 'Noord-Brabant']))],
+    #
+    #                 ]
+    missing_data = [
+                    data[(data["Jaar"] == 2015) & (data["Goederengroep_naam"] == "Rauwe melk van runderen, schapen en geiten")]
                     ]
-
 
     # Loop through each missing entry and fill it with the previous year's value
     for dat in missing_data:
@@ -194,7 +196,7 @@ def run(data, filename, corop=False, fill_data_gaps=False):
 
 if __name__ == '__main__':
     filepath = 'data/'
-    filename = 'CBS/041224 Tabel Regionale stromen 2015-2022 provincie CE67 GC6'
+    filename = 'CBS/131224 Tabel Regionale stromen 2015-2023 provincie CE67 GC6'
 
     all_data = pd.read_csv(filepath + filename +'.csv', delimiter=';', decimal=',', encoding='cp1252')
     run(all_data, filename, fill_data_gaps=True)

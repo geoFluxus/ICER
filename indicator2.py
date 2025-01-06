@@ -112,9 +112,9 @@ export_data = pd.merge(export_data, process_names, how='left')
 export_data = export_data[['province', 'ewc_code', 'ewc_name', 'code', 'name', 'R-description', 'sum', 'code_alt']]
 export_data = pd.merge(export_data, process_names, how='left', left_on='code_alt', right_on='code')
 export_data = export_data[['province', 'ewc_code', 'ewc_name', 'code_x', 'name_x', 'R-description',
-       'sum', 'code_alt', 'name_y']]
+       'sum','R-rate_alt', 'code_alt', 'name_y']]
 export_data.columns = ['provincie', 'euralcode', 'euralcode naam', 'verwerkingsmethodecode LMA', 'verwerkingsmethode',
-                       'verwerkingsgroep', 'gewicht (ton)', 'Alternatievecode','Beschrijving alternatieve code']
+                       'verwerkingsgroep', 'gewicht (kg)','Alternatieve verwerkingsgroep', 'Alternatieve code','Beschrijving alternatieve code']
 
 provinces = list(export_data['provincie'].drop_duplicates())
 for province in provinces:
@@ -187,6 +187,7 @@ for province in provinces:
     data = pd.merge(data, rlabels, left_on='current_rank', right_on='R-rate_short')
     data = pd.merge(data, rlabels, left_on='alt_rank', right_on='R-rate_short')
     data = data[['province', 'R-description_x', 'R-description_y', 'amount']]
+    data['amount'] = data['amount']/1000
 
     data_percent.columns = ['huidige verwerking, %', 'alternatieve verwerking, %']
     data.columns = ['provincie', 'huidige_rang', 'alternatieve_rang', 'hoeveelheid (ton)']

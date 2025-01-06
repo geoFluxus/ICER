@@ -91,8 +91,8 @@ def calculate_rmi_rmc(df, eur_df, year, save=False, abiotisch = False, amsterdam
     eur_or_t.set_index(eur_or_t['CBS_name'])
 
     #Load conversion tables
-    rme_import_coefficients = pd.read_excel(filepath + rme_matrices_file, sheet_name='RME_import_'+str(year))
-    rme_export_coefficients = pd.read_excel(filepath + rme_matrices_file, sheet_name='RME_export_'+str(year))
+    rme_import_coefficients = pd.read_excel(filepath + rme_matrices_file, sheet_name='RME_import_'+str(year if year != 2023 else 2022))
+    rme_export_coefficients = pd.read_excel(filepath + rme_matrices_file, sheet_name='RME_export_'+str(year if year != 2023 else 2022))
     rm_groups_import = rme_import_coefficients['Raw_material_name'][1:]
     rm_groups_export = rme_export_coefficients['Raw_material_name'][1:]
 
@@ -278,7 +278,7 @@ def regression(func, fig, *args, **kwargs):
 
 
 def calculate_indicators(path, file_name, sheets, raw_materials=False, cbs_to_rme_file='', goal='abiotisch',
-                         turn_off_groups=None, amsterdam_method=True):
+                         turn_off_groups=None, amsterdam_method=False):
     dmcs = pd.DataFrame()
     dmis = pd.DataFrame()
     all_data = pd.DataFrame()
@@ -481,7 +481,11 @@ def visualize_results(show_plt=False, per_province=False):
                 #results = regression(sns.regplot, fig, "Jaar", val, truncate=False)
                 plt.show()
 
-def visualise_per_province(show = False, one_plot = False):
+def visualise_per_province(show = False, one_plot = False, sharey = ['col', 'row']):
+    share_method = {
+        'col': ' DR matching',
+        'row': ' IC matching'
+    }
     provinces = list(dmis['Provincie'].unique())
     vals = [dmis, dmcs, rmis, rmcs]
     labels = ['DMI', 'DMC', 'RMI', 'RMC']
@@ -489,50 +493,54 @@ def visualise_per_province(show = False, one_plot = False):
         vals[i] = vals[i].groupby(['Provincie', 'Jaar']).sum().reset_index()
     for i in range(len(provinces)):
         plt.close()
-        fig, axs = plt.subplots(nrows=2, ncols=2, sharey=True, figsize=(13, 13), constrained_layout=True)
-        y_lims = []
-        for j in range(len(vals)):
-            axs[int(j/2),j%2].set(xlim=(2015,2030))
-            plot = sns.regplot(data=vals[j][vals[j]['Provincie'] == provinces[i]], x='Jaar', y=labels[j], ax=axs[int(j/2),j%2],
-                               truncate=False, color=styles.cols[int(j/2)])
-            #print(vals[j][(vals[j]['Provincie'] == provinces[i]) & (vals[j]['Jaar'] == 2016)])
-            #plot.set_title(labels[j])
-            axs[int(j / 2), j % 2].set_ylabel(labels[j] + ' (kton)', fontsize=13)
-            if j%2 == 1:
-                axs[int(j/2),j%2].yaxis.set_tick_params(labelleft=True)
-            #plot.set(xlim=(2015, 2030))
-            y_lims.append(axs[int(j/2),j%2].get_ylim()[1])
-        plot.set(ylim=(0,max(y_lims)))
-        # results = regression(sns.regplot, fig, "Jaar", val, truncate=False)
-        if one_plot:
-            ab_vals = [dmis_ab, dmcs_ab, rmis_ab, rmcs_ab]
-            for k in range(len(ab_vals)):
-                ab_vals[k] = ab_vals[k].groupby(['Provincie', 'Jaar']).sum().reset_index()
-                if k == 2: ab_vals[k]['RMI'] = ab_vals[k]['RMI'].astype(float)
-                if k == 3: ab_vals[k]['RMC'] = ab_vals[k]['RMC'].astype(float)
-            for j in range(len(ab_vals)):
-                plot = sns.regplot(data=ab_vals[j][ab_vals[j]['Provincie'] == provinces[i]], x='Jaar', y=labels[j],
-                                   ax=axs[int(j / 2), j % 2],
-                                   truncate=False, color='grey')
-                if j == 1 or j == 3:
-                    plot.hlines(
-                        y=ab_vals[j][(ab_vals[j]['Provincie'] == provinces[i]) & (ab_vals[j]['Jaar'] == 2016)][labels[j]].values[
-                              0] / 2, xmin=2015, xmax=2030,
-                        color='darkcyan', linewidth=2, linestyle='dashed')
-
-                axs[int(j / 2), j % 2].set_ylabel(labels[j] + ' (kton)', fontsize=13)
+        for share in sharey:
+            fig, axs = plt.subplots(nrows=2, ncols=2, sharey=share, figsize=(13, 13), constrained_layout=True)
+            y_lims = []
+            for j in range(len(vals)):
+                axs[int(j/2),j%2].set(xlim=(2015,2030))
+                plot = sns.regplot(data=vals[j][vals[j]['Provincie'] == provinces[i]], x='Jaar', y=labels[j], ax=axs[int(j/2),j%2],
+                                   truncate=False, color=styles.cols[int(j/2)])
+                #print(vals[j][(vals[j]['Provincie'] == provinces[i]) & (vals[j]['Jaar'] == 2016)])
                 #plot.set_title(labels[j])
-        if show:
-            plt.show()
-        else:
-            if 'abiotisch' in result_path:
-                text = ' Abiotisch'
-            else:
-                text = ' Totaal'
+                axs[int(j / 2), j % 2].set_ylabel(labels[j] + ' (kton)', fontsize=13)
+                if j%2 == 1:
+                    axs[int(j/2),j%2].yaxis.set_tick_params(labelleft=True)
+                #plot.set(xlim=(2015, 2030))
+                y_lims.append(axs[int(j/2),j%2].get_ylim()[1])
+            if share == 'all':
+                plot.set(ylim=(0,max(y_lims)))
+
+            # results = regression(sns.regplot, fig, "Jaar", val, truncate=False)
             if one_plot:
-                text = ' Totaal en Abiotisch'
-            plt.tight_layout()
-            plt.savefig(f'./results/results_per_province/{provinces[i]}/{provinces[i]}{text}.png', dpi = 200)
+                ab_vals = [dmis_ab, dmcs_ab, rmis_ab, rmcs_ab]
+                for k in range(len(ab_vals)):
+                    ab_vals[k] = ab_vals[k].groupby(['Provincie', 'Jaar']).sum().reset_index()
+                    if k == 2: ab_vals[k]['RMI'] = ab_vals[k]['RMI'].astype(float)
+                    if k == 3: ab_vals[k]['RMC'] = ab_vals[k]['RMC'].astype(float)
+                for j in range(len(ab_vals)):
+                    plot = sns.regplot(data=ab_vals[j][ab_vals[j]['Provincie'] == provinces[i]], x='Jaar', y=labels[j],
+                                       ax=axs[int(j / 2), j % 2],
+                                       truncate=False, color='grey')
+                    if j == 1 or j == 3:
+                        plot.hlines(
+                            y=ab_vals[j][(ab_vals[j]['Provincie'] == provinces[i]) & (ab_vals[j]['Jaar'] == 2016)][labels[j]].values[
+                                  0] / 2, xmin=2015, xmax=2030,
+                            color='darkcyan', linewidth=2, linestyle='dashed')
+
+                    axs[int(j / 2), j % 2].set_ylabel(labels[j] + ' (kton)', fontsize=13)
+                    #plot.set_title(labels[j])
+            if show:
+                plt.show()
+            else:
+                if 'abiotisch' in result_path:
+                    text = ' Abiotisch'
+                else:
+                    text = ' Totaal'
+                if one_plot:
+                    text = ' Totaal en Abiotisch'
+                text += share_method[share]
+                plt.tight_layout()
+                plt.savefig(f'./results/results_per_province/{provinces[i]}/{provinces[i]}{text}.png', dpi = 200)
 # ______________________________________________________________________________
 #  NON-ADJUSTABLE PARAMETERS
 # ______________________________________________________________________________
@@ -546,7 +554,7 @@ if __name__ == '__main__':
              'Tabel 6a': 2020,
              'Tabel 7a': 2021,
              'Tabel 8a': 2022,
-             #'Tabel 9a': 2023
+             'Tabel 9a': 2023
              }
 
     columns = ['Provincie',
@@ -639,7 +647,7 @@ if __name__ == '__main__':
     filepath = 'data/'
 
     # read data file
-    filename = 'CBS/041224 Tabel Regionale stromen 2015-2022 provincie CE67 GC6 Aangepast.xlsx'
+    filename = 'CBS/131224 Tabel Regionale stromen 2015-2023 provincie CE67 GC6 Aangepast.xlsx'
     # read division into biotic / abiotic product groups
     resource_type = pd.read_csv('data/geoFluxus/cbs_biotisch_abiotisch_2024_final.csv', delimiter=';')
     # ______________________________________________________________________________
@@ -674,7 +682,7 @@ if __name__ == '__main__':
     # print(final_rmis)
     # final_rmcs = rmcs.groupby('Jaar')['RMC'].sum()
     # print(final_rmcs)
-    #visualize_results(per_province=False)
+    visualize_results(per_province=False)
     visualise_per_province(one_plot=True)
 
     # ______________________________________________________________________________

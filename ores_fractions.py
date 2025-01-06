@@ -46,7 +46,7 @@ def find_goods_per_nst_code(category = 24):
     goods = pd.merge(goods, code_names, on='GN')
     return goods
 
-def create_nst_goods_excel(categories = [24,52,55,56,57,58,59,60]):
+def create_nst_goods_excel(categories = [24,52,55,56,57,58,59,60,67]):
     dfs = {}
     for i in categories:
         dfs[i] = find_goods_per_nst_code(i)
