@@ -287,6 +287,7 @@ def visualize_full_results(data, result_path = 'results/results_per_province/', 
         #     ax_cbar.invert_yaxis()  # This is the key method.
         # ax_heatmap.tick_params(fontsize=15)
         plt.subplots_adjust(hspace=0.01, wspace=0.02)
+
     elif plt_type == 'bar':
         fig, ax = plt.subplots(ncols=6, nrows=2, figsize = (16,25 * (filter_groups/67)), sharey=True, sharex=True)
         for i in range(12):
@@ -417,7 +418,7 @@ if __name__ == '__main__':
     # construct_impacts_file()
     for i in [0,1]:
         visualize_full_results(dat, filter_groups=None, prov=None, plt_type='bar', indicator = inds[i])
-#     visualize_impacts(dat, indicator = inds[i], col_name = col_names[i], jaar = 2022, result_path = './results/results_per_province/')    #
-#         for j in list(dat['Provincie'].unique()):
-#             bar_plot_per_province(dat, prov=j, indicator=inds[i])
-#             time_plot_per_province(dat, prov=j, indicator=inds[i])
+    # visualize_impacts(dat, indicator = inds[i], col_name = col_names[i], jaar = 2022, result_path = './results/results_per_province/')    #
+        for j in list(dat['Provincie'].unique()):
+            bar_plot_per_province(dat, prov=j, indicator=inds[i])
+            time_plot_per_province(dat, prov=j, indicator=inds[i])
