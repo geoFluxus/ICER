@@ -205,7 +205,8 @@ def visualize_impacts_and_DMI(data, result_path = 'results/results_per_province/
 
 def visualize_full_results(data, result_path = 'results/results_per_province/', jaar = 2022, prov='Friesland', year=2022,
                       percents=True, filter_groups=None, remove_aardgas = True, indicator='CO2',
-                      fontsize=24, plt_type='heatmap'):
+                      fontsize=24, plt_type='heatmap', show=False, transparent=False):
+    plt.close()
     text = ''
     if indicator == 'CO2':
         ind_index = 1
@@ -231,7 +232,7 @@ def visualize_full_results(data, result_path = 'results/results_per_province/', 
     if percents:
         tots = data_.groupby('Provincie')[col_names[ind_index]].sum()
         tots.rename('Total', inplace=True)
-        print(tots)
+
         data_ = pd.merge(data_, tots, how='left', on='Provincie')
         data_[col_names[ind_index]] = data_[col_names[ind_index]] / data_['Total'] * 100
     for i in range(len(provinces)):
@@ -245,7 +246,7 @@ def visualize_full_results(data, result_path = 'results/results_per_province/', 
             if np.any(row.values > 2.5):
                 keep_index.append(ind)
         filter_groups = len(keep_index)
-        print(filter_groups)
+
         viz_data = viz_data[viz_data.index.isin(keep_index)]
         s = viz_data.sum()
         viz_data = viz_data[s.sort_values(ascending=False).index]
@@ -287,31 +288,41 @@ def visualize_full_results(data, result_path = 'results/results_per_province/', 
         # ax_heatmap.tick_params(fontsize=15)
         plt.subplots_adjust(hspace=0.01, wspace=0.02)
     elif plt_type == 'bar':
-        fig, ax = plt.subplots(ncols=12, figsize = (25,25 * (filter_groups/67)), sharey=True, sharex=True)
+        fig, ax = plt.subplots(ncols=6, nrows=2, figsize = (16,25 * (filter_groups/67)), sharey=True, sharex=True)
         for i in range(12):
-            viz_data[viz_data.index == provinces[i]].plot.barh(legend=False, ax=ax[i])
-            if i == 0:
-                labels = ax[i].get_yticklabels()
-                labels = [s.get_text() if len(s.get_text()) < 37 else s.get_text()[:37] + '..' for s in labels]
-                ax[i].set_yticklabels(labels, fontsize=fontsize, rotation=90)
-            else:
-                ax[i].set_yticks([])
+            #print(viz_data[viz_data.index == provinces[i]])
+            temp = viz_data[viz_data.index == provinces[i]].T
+            ax[int(i/6),i%6].barh(range(filter_groups),temp[provinces[i]],  color=styles.cols[:filter_groups])
+            ax[int(i / 6), i % 6].set(title=provinces[i])
+            if int(i/6) == 1:
+                ax[int(i / 6), i % 6].set(xlabel=f'{label_names[ind_index]} (%)')
+            if i%6 == 0:
+                labels = temp.index
+                labels = [s if len(s) < 37 else s[:37] + '..' for s in labels]
+                ax[int(i/6),i%6].set_yticks(range(filter_groups),labels, fontsize=13)
+
+            ax[int(i/6),i%6].invert_yaxis()
+            # else:
+            #     ax[int(i/6),i%6].set_yticks([])
     # Adjust layout to make everything fit neatly
     plt.tight_layout()
 
     # text = ''
     # if filter_province: text += 'filtered'
+
     if prov is not None:
         save_str = f'./results/results_per_province/{prov}/{label_names[ind_index]} {plt_type} {prov}{text}.png'
     else:
         save_str = f'./results/{label_names[ind_index]} {plt_type} {text}.png'
 
-    plt.savefig(save_str, dpi=200,transparent=True)
-
+    if not show:
+        plt.savefig(save_str, dpi=200,transparent=transparent)
+    else: plt.show()
     #plt.show()
     return
 
-def time_plot_per_province(data, prov='Friesland', indicator='CO2', normalize=False):
+def time_plot_per_province(data, prov='Friesland', indicator='CO2', normalize=False, show=False):
+    plt.close()
     if indicator == 'CO2':
         ind_index = 1
     elif indicator == 'MKI':
@@ -323,8 +334,6 @@ def time_plot_per_province(data, prov='Friesland', indicator='CO2', normalize=Fa
     col_names = ['MKI total (mln euro)', 'CO2 emissions total (kt)', 'DMI']
     viz_data = data.groupby(['Provincie', 'Jaar'])[[col_names[0], col_names[1]]].sum().reset_index()
     viz_data = viz_data[viz_data['Provincie'] == prov]
-    #viz_data = viz_data.pivot(columns='Provincie', values=col_names[0], index='Jaar')
-    #viz_data.plot.line(cmap='tab20')
     viz_data['Jaar'] = viz_data['Jaar'].astype(int)
     if normalize:
         for i in range(2):
@@ -342,21 +351,22 @@ def time_plot_per_province(data, prov='Friesland', indicator='CO2', normalize=Fa
     new_ymax = ymax + range_padding
     # Set the new y-axis limits
     fig.set(ylim=(0, new_ymax))
+    if show: plt.show()
+    else:
+        plt.savefig(f'./results/results_per_province/{prov}/{label_names[ind_index]} time plot {prov}.png', dpi=200)
 
-    plt.show()
-
-def bar_plot_per_province(data, year=2022, indicator='CO2', prov='Friesland', normalize=False,
-                          threshold = 0.8):
+def bar_plot_per_province(data, year=2023, indicator='CO2', prov='Friesland', normalize=False,
+                          threshold = 0.8, show=False):
+    plt.close()
     if indicator == 'CO2':
         ind_index = 1
     elif indicator == 'MKI':
         ind_index = 0
     else:
         ind_index = 0
-    print(data.columns)
     #Change to an overview of emissions per goederengroep for one province
-    label_names = ['Domestic Material Input', 'CO2eq uitstoot (kt)', 'Milieukostenindicator (mln euro)']
-    col_names = ['DMI', 'CO2 emissions total (kt)', 'MKI total (mln euro)']
+    label_names = ['Milieukostenindicator (mln euro)', 'CO2eq uitstoot (kt)', 'Domestic Material Input']
+    col_names = ['MKI total (mln euro)', 'CO2 emissions total (kt)', 'DMI']
     viz_data = data.groupby(['Provincie', 'Jaar', 'Goederengroep'])[col_names].sum().reset_index()
     viz_data = viz_data[(viz_data['Jaar'] == year) & (viz_data['Provincie'] == prov)]
 
@@ -364,7 +374,6 @@ def bar_plot_per_province(data, year=2022, indicator='CO2', prov='Friesland', no
         for i in col_names:
             viz_data[i] = viz_data[i] / viz_data[i].sum() * 100
     #viz_data = viz_data.pivot(columns='Provincie', values=col_names[ind_index], index='Jaar')
-    print(viz_data.columns)
     viz_data.sort_values(by=col_names[ind_index], ascending=False, inplace=True)
     if threshold is not None:
 
@@ -390,7 +399,9 @@ def bar_plot_per_province(data, year=2022, indicator='CO2', prov='Friesland', no
     plt.ylabel(label_names[ind_index], fontsize=13)
     fig.tick_params(labelsize=13)
     plt.tight_layout()
-    plt.show()
+    if show: plt.show()
+    else:
+        plt.savefig(f'./results/results_per_province/{prov}/{label_names[ind_index]} bar plot {prov}.png', dpi=200)
 
 
 if __name__ == '__main__':
@@ -401,12 +412,12 @@ if __name__ == '__main__':
     col_names = ['MKI total (mln euro)','CO2 emissions total (kt)']
     dat = calculate_impacts(all_data_file, emissions_file, groups_file)
     dat.to_excel('./results/indicator3/all_data.xlsx')
-    time_plot_per_province(dat)
-    bar_plot_per_province(dat)
+    # time_plot_per_province(dat)
+    # bar_plot_per_province(dat)
     # construct_impacts_file()
-    visualize_full_results(dat, filter_groups=None, prov=None, plt_type='bar')
-    # for i in [0,1]:
-    #     visualize_impacts(dat, indicator = inds[i], col_name = col_names[i], jaar = 2022, result_path = './results/results_per_province/')
-    #
-    # for i in list(dat['Provincie'].unique()):
-    #     visualize_impacts_and_DMI(dat, prov=i)
+    for i in [0,1]:
+        visualize_full_results(dat, filter_groups=None, prov=None, plt_type='bar', indicator = inds[i])
+#     visualize_impacts(dat, indicator = inds[i], col_name = col_names[i], jaar = 2022, result_path = './results/results_per_province/')    #
+#         for j in list(dat['Provincie'].unique()):
+#             bar_plot_per_province(dat, prov=j, indicator=inds[i])
+#             time_plot_per_province(dat, prov=j, indicator=inds[i])
