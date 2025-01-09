@@ -1,8 +1,11 @@
+from webbrowser import Error
+
 import pandas as pd
 import geopandas as gpd
 import styles
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
+import numpy as np
 import os
 # this setting should be set to 'warn' if any changes are made to the original code
 pd.options.mode.chained_assignment = None
@@ -111,8 +114,9 @@ export_data = pd.merge(export_data, process_names, how='left')
 
 export_data = export_data[['province', 'ewc_code', 'ewc_name', 'code', 'name', 'R-description', 'sum', 'code_alt']]
 export_data = pd.merge(export_data, process_names, how='left', left_on='code_alt', right_on='code')
+print(export_data.columns)
 export_data = export_data[['province', 'ewc_code', 'ewc_name', 'code_x', 'name_x', 'R-description',
-       'sum','R-rate_alt', 'code_alt', 'name_y']]
+       'sum','code_y', 'code_alt', 'name_y']]
 export_data.columns = ['provincie', 'euralcode', 'euralcode naam', 'verwerkingsmethodecode LMA', 'verwerkingsmethode',
                        'verwerkingsgroep', 'gewicht (kg)','Alternatieve verwerkingsgroep', 'Alternatieve code','Beschrijving alternatieve code']
 
@@ -137,7 +141,11 @@ print(f"All processing data per province has been saved to {result_path}/results
 # print(viz_data)
 
 provinces = list(viz_data['province'].drop_duplicates())
-
+ranks = list(viz_data['current_rank'].unique())
+rank_cols = list(viz_data['colour'].unique())
+rank_col_dict = {}
+for i in range(len(ranks)):
+    rank_col_dict[ranks[i]] = rank_cols[i]
 for province in provinces:
 
     data = viz_data[viz_data['province'] == province]
@@ -149,20 +157,78 @@ for province in provinces:
     #print(f'{province}: {indicator}% improvement potential')
     print(f'{province}: {storage}% opslag')
     # create dimensions
-    current_rank_dim = go.parcats.Dimension(values=data.current_rank,
-                                            categoryorder='category ascending',
-                                            label='Huidige rang')
-    alt_rank_dim = go.parcats.Dimension(values=data.alt_rank,
-                                        categoryorder='category ascending',
-                                        label='Alternatieve rang')
     color = data.colour
+    #print(data[['current_rank','colour']])
+    nodes_y = []
+    percentages = []
+    labels = []
+    for i in ['current_rank', 'alt_rank']:
+        node_heights = data.groupby(i)['amount'].sum().reset_index()
+        node_heights['amount'] = node_heights['amount'] / node_heights['amount'].sum()
+        percs = list(node_heights['amount'])
+        node_heights['cumulative'] = node_heights['amount'].cumsum()
+        lst = [0]+ list(node_heights['cumulative'])
+        lst = [(lst[j] + lst[j+1])/2 for j in range(len(lst)-1)]
+        min_dist = 0.015
+        arr = np.array(lst)
+        for j in range(len(arr)-1):
+            if arr[j+1] - arr[j] < min_dist:
+                arr[j+1] = arr[j] + min_dist
+                arr[j+2:] += min_dist
+        percentages += percs
+        labels += list(node_heights[i])
+        nodes_y.append(list(arr))
+    #align I
+    print(labels)
+    nodes_y[0][-1] = nodes_y[1][-1]
+    dimensions = {
+        'label': ['' for i in range(18)],# ranks + ranks,
+        'thickness': 20,
+        'color': rank_cols + rank_cols,
+        'x': [0.001 for i in range(len(ranks))] + [0.999 for i in range(len(ranks))],
+        'y': nodes_y[0] + nodes_y[1],
+        #'align': ["left"] * len(ranks) + ["right"] * len(ranks)
+    }
+    print(len(dimensions['x']))
+    print(len(dimensions['y']))
 
-    fig = go.Figure(data=[go.Parcats(dimensions=[current_rank_dim, alt_rank_dim],
-                                     line={'color': color, 'shape': 'hspline'},
-                                     counts=data.amount,
-                                     arrangement='freeform',
-                                     sortpaths='backward'
-                                     )])
+    links = {
+        'source': [ranks.index(i) for i in data['current_rank']],
+        'target': [ranks.index(i)+len(ranks) for i in data['alt_rank']],
+        'value': data['amount'].values.tolist(),
+        'color': color,
+    }
+    fig = go.Figure(data=[go.Sankey(
+        node=dimensions,
+        link=links,
+    )])
+    x_pos = [-0.12,1.04]
+    for i in range(len(nodes_y[0]) + len(nodes_y[1])):
+        string = str(int(np.round(100* percentages[i], 0))) if percentages[i] >=0.01 else '<1'
+        if len(string) == 1:
+            string = '  ' + string
+            if string == '1':
+                string += ' '
+        fig.add_annotation(x=x_pos[int(i/9)], y=1-nodes_y[int(i/9)][i%9],
+                           text=f"{labels[i]} {string}%",
+                           showarrow=False,
+                           xanchor='left',
+                           yanchor='middle',)
+    # current_rank_dim = go.parcats.Dimension(values=data.current_rank,
+    #                                         categoryorder='category ascending',
+    #                                         label='Huidige rang',
+    #                                         )
+    # alt_rank_dim = go.parcats.Dimension(values=data.alt_rank,
+    #                                     categoryorder='category ascending',
+    #                                     label='Alternatieve rang')
+    #
+    #
+    # fig = go.Figure(data=[go.Parcats(dimensions=[current_rank_dim, alt_rank_dim],
+    #                                  line={'color': color, 'shape': 'hspline'},
+    #                                  counts=data.amount,
+    #                                  arrangement='freeform',
+    #                                  sortpaths='backward',
+    #                                  )])
 
     fig.update_layout(title=f'{province} {indicator}%')
     # save figure to file, and open figure in a browser
@@ -172,7 +238,6 @@ for province in provinces:
     fig.write_image(f'{save_for_slides}/results_per_province/{province}/{province}_sankey.png',
                     width = 650, height=1000, scale = 3)
     fig.show()
-
     # OUTPUT DATA PER PROVINCE
     current_distrib = data.groupby(['current_rank']).sum('amount')
     alt_distrib = data.groupby(['alt_rank']).sum('amount')

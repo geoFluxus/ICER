@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from seaborn.regression import _RegressionPlotter
 import styles
+import json
 
 sns.set_theme(color_codes=True)
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -486,6 +487,7 @@ def visualise_per_province(show = False, one_plot = False, sharey = ['col', 'row
         'col': ' DR matching',
         'row': ' IC matching'
     }
+    linear_results = {}
     provinces = list(dmis['Provincie'].unique())
     vals = [dmis, dmcs, rmis, rmcs]
     labels = ['DMI', 'DMC', 'RMI', 'RMC']
@@ -521,7 +523,17 @@ def visualise_per_province(show = False, one_plot = False, sharey = ['col', 'row
                     plot = sns.regplot(data=ab_vals[j][ab_vals[j]['Provincie'] == provinces[i]], x='Jaar', y=labels[j],
                                        ax=axs[int(j / 2), j % 2],
                                        truncate=False, color='grey')
-                    if j == 1 or j == 3:
+                    if j == 1:
+                        xpoints = plot.get_lines()[1].get_xdata()
+                        ypoints = plot.get_lines()[1].get_ydata()
+                        a = (ypoints[1] - ypoints[0])/(xpoints[1] -xpoints[0])
+                        val_2030 = ypoints[-1] + a * (2030 - xpoints[-1])
+                        val_2016 = ab_vals[j][(ab_vals[j]['Provincie'] == provinces[i]) & (ab_vals[j]['Jaar'] == 2016)][labels[j]].values[0]
+                        percent_change = val_2030/val_2016 * 100
+                        linear_results[provinces[i]] = {'procent toename':percent_change - 100,
+                                                        'stijgingscoefficient':a,
+                                                        'waarde 2016': val_2016,
+                                                        'waarde 2030': val_2030}
                         plot.hlines(
                             y=ab_vals[j][(ab_vals[j]['Provincie'] == provinces[i]) & (ab_vals[j]['Jaar'] == 2016)][labels[j]].values[
                                   0] / 2, xmin=2015, xmax=2030,
@@ -541,6 +553,9 @@ def visualise_per_province(show = False, one_plot = False, sharey = ['col', 'row
                 text += share_method[share]
                 plt.tight_layout()
                 plt.savefig(f'./results/results_per_province/{provinces[i]}/{provinces[i]}{text}.png', dpi = 200)
+
+    with open('./results/dmc_increases.p', 'w') as fp:
+        json.dump(linear_results, fp, indent=4)
 # ______________________________________________________________________________
 #  NON-ADJUSTABLE PARAMETERS
 # ______________________________________________________________________________

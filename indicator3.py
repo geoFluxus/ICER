@@ -423,7 +423,7 @@ def plot_heatmap(dat, mat_inds, prov='Zuid-Holland', filter_endangered = False, 
     if filter_province: text += 'filtered'
     if save:
         plt.savefig(f'./results/results_per_province/{prov}/heatmap {prov} {text}.png', dpi=200)
-    #plt.show()
+    plt.close(fig)
     if filter_province and values is None:
         return list(viz_data.index)
 
@@ -542,7 +542,7 @@ def plot_scatter():
     plt.savefig('./results/critical_raw_materials/crms_eu.png', dpi=200)
     plt.close()
 
-def plot_simplified_bars(dat, prov='Friesland', year=2023, normalize=True, fontsize=13, show=False):
+def plot_simplified_bars(dat, prov='Friesland', year=2023, normalize=True, fontsize=13, show=False, num_cats_plot=True):
     plt.close()
     sns.set_theme(color_codes=True)
     viz_data = dat[(dat['Jaar'] == year) & (dat['Provincie'] == prov)]
@@ -555,26 +555,41 @@ def plot_simplified_bars(dat, prov='Friesland', year=2023, normalize=True, fonts
         viz_data = viz_data / len(materials)
 
     viz_data = viz_data.reset_index()
-    viz_data = viz_data.loc[viz_data.iloc[:, 1:].sum(axis=1).sort_values(ascending=False).index]
+    viz_data = viz_data.loc[viz_data.iloc[:, 1:].sum(axis=1).sort_values().index]
     num_cats = (viz_data.iloc[:,1:] != 0).sum(axis=1)
-    fig = viz_data.plot.bar(x='Goederengroep', stacked=True, color=styles.cols[0], legend=False, figsize=(10,10))
-    for i, count in enumerate(num_cats):
-        #print(viz_data.iloc[i].sum())
-        plt.text(i, viz_data.iloc[i].values[1:].sum() + 0.75, f'{count}', ha='center', fontsize=10)
+    fig = viz_data.plot.barh(x='Goederengroep', stacked=True, color=styles.cols[0], legend=False, figsize=(10,10),
+                             linewidth=0.5 if not num_cats_plot else 0)
+    if not num_cats_plot:
+        for i, count in enumerate(num_cats):
+            #print(viz_data.iloc[i].sum())
+            plt.text(viz_data.iloc[i].values[1:].sum() + 0.75, i, f'{count}', ha='center', fontsize=10)
 
-    labels = fig.get_xticklabels()
+    labels = fig.get_yticklabels()
     labels = [s.get_text() if len(s.get_text()) < 37 else s.get_text()[:37] + '..' for s in labels]
-    fig.set_xticklabels(labels, fontsize=fontsize)
-    fig.set_xlabel('Goederengoep', fontsize=fontsize)
+    fig.set_yticklabels(labels, fontsize=fontsize)
+    fig.set_ylabel('Goederengoep', fontsize=fontsize)
     _, ymax = fig.get_ylim()
-    yticksize = 5 if normalize else 100
-    fig.set_yticks(range(yticksize,int(ymax/yticksize + 1)*yticksize,yticksize),
-                   range(yticksize,int(ymax/yticksize + 1)*yticksize,yticksize), fontsize=fontsize)
-    fig.set_ylabel("Aandeel kritieke grondstoffen (%)", fontsize=fontsize)
+    xticksize = 5 if normalize else 100
+    fig.set_xticks(range(xticksize,int(ymax/xticksize + 1)*xticksize,xticksize),
+                   range(xticksize,int(ymax/xticksize + 1)*xticksize,xticksize), fontsize=fontsize)
+    fig.set_xlabel("Aandeel kritieke grondstoffen (%)", fontsize=fontsize)
     plt.tight_layout()
     if show: plt.show()
     else:
         plt.savefig(f'./results/results_per_province/{prov}/CRM bars {prov}.png', dpi=200)
+    plt.close()
+
+    if num_cats_plot:
+        fig = num_cats.plot.barh(x='Goederengroep', color=styles.cols[0], legend=False, figsize=(10,10))
+        fig.set_yticklabels(labels, fontsize=fontsize)
+        fig.set_ylabel('Goederengoep', fontsize=fontsize)
+        _, ymax = fig.get_ylim()
+        # xticksize = 5 if normalize else 100
+        # fig.set_xticks(range(xticksize, int(ymax / xticksize + 1) * xticksize, xticksize),
+        #                range(xticksize, int(ymax / xticksize + 1) * xticksize, xticksize), fontsize=fontsize)
+        fig.set_xlabel("Aantal kritieke grondstoffen", fontsize=fontsize)
+        plt.tight_layout()
+        plt.show()
 
 if __name__ == '__main__':
     inds = ['Supply Risk (SR)', 'Economic Importance (EI)']
@@ -604,7 +619,6 @@ if __name__ == '__main__':
     euro_waarde = euro_waarde[euro_waarde['Jaar'] == 2023]
     euro_waarde['Inkoop_waarde'] = euro_waarde['Invoer_nationaal'] + euro_waarde['Invoer_internationaal']
     euros = euro_waarde[['Provincie', 'Goederengroep','Inkoop_waarde']]
-
 
     for p in provs:
         for i in [False]:
