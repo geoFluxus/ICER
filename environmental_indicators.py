@@ -273,7 +273,7 @@ def visualize_impacts_and_DMI(data, result_path = 'results/results_per_province/
 
 def visualize_full_results(data, result_path='results/results_per_province/', jaar=2023, prov=None, year=2023,
                            percents=True, filter_groups=None, remove_aardgas=True, indicator='CO2',
-                           fontsize=24, plt_type='heatmap', show=False, transparent=False):
+                           fontsize=22, plt_type='heatmap', show=False, transparent=False):
     plt.close()
     text = ''
     if indicator == 'CO2':
@@ -331,7 +331,7 @@ def visualize_full_results(data, result_path='results/results_per_province/', ja
         viz_data_filtered = viz_data_filtered[s.sort_values(ascending=False).index]
 
         # Ensure "Overig" is at the bottom
-        viz_data_filtered = viz_data_filtered.sort_index(ascending=True, key=lambda x: x == "Overig")
+        viz_data_filtered = viz_data_filtered.sort_index(ascending=False, key=lambda x: x == "Overig")
 
         viz_data = viz_data_filtered
     else:
@@ -376,10 +376,10 @@ def visualize_full_results(data, result_path='results/results_per_province/', ja
         plt.subplots_adjust(hspace=0.01, wspace=0.02)
 
     elif plt_type == 'bar':
-        fig, ax = plt.subplots(ncols=6, nrows=2, figsize=(16, 25 * (filter_groups / 67)), sharey=True, sharex=True)
+        fig, ax = plt.subplots(ncols=6, nrows=2, figsize=(22, 32 * (filter_groups / 67)), sharey=True, sharex=True)
         for i in range(12):
             temp = viz_data[viz_data.index == provinces[i]].T
-            colors = [goederengroep_colors.get(item, "#F5F5F5") for item in temp.index]
+            colors = [goederengroep_colors.get(item, "#C1C1C1") for item in temp.index]
 
             # Adjust y-axis range to match the data size
             y_range = range(len(temp.index))
@@ -445,7 +445,7 @@ def time_plot_per_province(data, prov='Friesland', indicator='CO2', normalize=Fa
         plt.savefig(f'./results/results_per_province/{prov}/{label_names[ind_index]} time plot {prov}.png', dpi=200)
 
 
-def bar_plot_per_province(data, year=2023, indicator='CO2', prov='Friesland', normalize=False, threshold=0.8,
+def bar_plot_per_province(data, year=2023, indicator='CO2', prov='Friesland', normalize=False, threshold=0.82,
                           show=False) :
     import matplotlib.pyplot as plt
 
@@ -479,9 +479,10 @@ def bar_plot_per_province(data, year=2023, indicator='CO2', prov='Friesland', no
         total_sum = viz_data[col_names[ind_index]].sum()
         threshold_val = threshold * total_sum
 
+        #print(viz_data[(viz_data['cumulative_sum'] > threshold_val)].min())
         # Separate data above and below threshold
-        main_data = viz_data[viz_data['cumulative_sum'] <= threshold_val]
-        other_data = viz_data[viz_data['cumulative_sum'] > threshold_val]
+        main_data = viz_data[(viz_data['cumulative_sum'] <= threshold_val)]
+        other_data = viz_data[(viz_data['cumulative_sum'] > threshold_val)]
 
         # Combine other data into one category "Overig"
         if not other_data.empty :
@@ -501,7 +502,7 @@ def bar_plot_per_province(data, year=2023, indicator='CO2', prov='Friesland', no
     main_data = main_data.iloc[: :-1]
 
     # Create the bar plot
-    colors = [goederengroep_colors.get(item, "#F5F5F5") for item in main_data['Goederengroep']]
+    colors = [goederengroep_colors.get(item, "#C1C1C1") for item in main_data['Goederengroep']]
     fig = main_data.plot(x='Goederengroep', y=col_names[ind_index], kind='barh', figsize=(10, 10), color=colors,
                          legend=False)
     labels = fig.get_yticklabels()
@@ -512,8 +513,10 @@ def bar_plot_per_province(data, year=2023, indicator='CO2', prov='Friesland', no
     fig.tick_params(labelsize=13)
 
     # Add percentage labels to bars
+    _, xmax = fig.get_xlim()
     for index, value in enumerate(main_data[col_names[ind_index]]) :
-        plt.text(value, index, f'{main_data["percentage"].iloc[index]:.1f}%', va='center')
+        plt.text(value+xmax*0.01 if value<0.8*xmax else value-xmax*0.1, index,
+                 f'{main_data["percentage"].iloc[index]:.1f}%', va='center')
 
     plt.tight_layout()
 

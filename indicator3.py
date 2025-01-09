@@ -572,7 +572,7 @@ def plot_simplified_bars(dat, prov='Friesland', year=2023, normalize=True, fonts
     xticksize = 5 if normalize else 100
     fig.set_xticks(range(xticksize,int(ymax/xticksize + 1)*xticksize,xticksize),
                    range(xticksize,int(ymax/xticksize + 1)*xticksize,xticksize), fontsize=fontsize)
-    fig.set_xlabel("Aandeel kritieke grondstoffen (%)", fontsize=fontsize)
+    fig.set_xlabel(f"Aandeel van de kritieke grondstoffen in {prov} (%)", fontsize=fontsize)
     plt.tight_layout()
     if show: plt.show()
     else:
@@ -587,7 +587,7 @@ def plot_simplified_bars(dat, prov='Friesland', year=2023, normalize=True, fonts
         # xticksize = 5 if normalize else 100
         # fig.set_xticks(range(xticksize, int(ymax / xticksize + 1) * xticksize, xticksize),
         #                range(xticksize, int(ymax / xticksize + 1) * xticksize, xticksize), fontsize=fontsize)
-        fig.set_xlabel("Aantal kritieke grondstoffen", fontsize=fontsize)
+        fig.set_xlabel(f"Aantal kritieke grondstoffen in {prov}", fontsize=fontsize)
         plt.tight_layout()
         if show:
             plt.show()
