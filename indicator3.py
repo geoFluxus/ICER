@@ -484,7 +484,7 @@ def goederen_province_fractions(values, filter_endangered = False, filter_provin
 
     fig = viz_data.plot.barh(stacked=True, color=cols,
                              figsize=(20, 10), legend=plt_legend)  # color = styles.colors_list_3)#, alpha=0.9)
-
+    plt.gca().invert_yaxis()
     fig.set(xlim=(0,1))
     fig.set_facecolor('gainsboro')
 
@@ -514,7 +514,7 @@ def goederen_province_fractions(values, filter_endangered = False, filter_provin
         plt.show()
     else:
         print('saving image')
-        plt.savefig(f"W:/Shared With Me/MASTER/PROJECTS/IPO/ICER 2024/results_per_province/{prov}/goederen_per_provincie{text} {prov}.png", dpi=200)
+        plt.savefig(f"./results/results_per_province/{prov}/goederen_per_provincie{text} {prov}.png", dpi=200)
     plt.close()
     if filter_province:
         return viz_data.index
@@ -580,7 +580,7 @@ def plot_simplified_bars(dat, prov='Friesland', year=2023, normalize=True, fonts
     plt.close()
 
     if num_cats_plot:
-        fig = num_cats.plot.barh(x='Goederengroep', color=styles.cols[0], legend=False, figsize=(10,10))
+        fig = num_cats.plot.barh(x='Goederengroep', color=styles.cols[2], legend=False, figsize=(10,10))
         fig.set_yticklabels(labels, fontsize=fontsize)
         fig.set_ylabel('Goederengoep', fontsize=fontsize)
         _, ymax = fig.get_ylim()
@@ -589,7 +589,10 @@ def plot_simplified_bars(dat, prov='Friesland', year=2023, normalize=True, fonts
         #                range(xticksize, int(ymax / xticksize + 1) * xticksize, xticksize), fontsize=fontsize)
         fig.set_xlabel("Aantal kritieke grondstoffen", fontsize=fontsize)
         plt.tight_layout()
-        plt.show()
+        if show:
+            plt.show()
+        else:
+            plt.savefig(f'./results/results_per_province/{prov}/CRM amounts bars {prov}.png', dpi=200)
 
 if __name__ == '__main__':
     inds = ['Supply Risk (SR)', 'Economic Importance (EI)']

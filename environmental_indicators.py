@@ -324,14 +324,14 @@ def visualize_full_results(data, result_path='results/results_per_province/', ja
         anders_values = excluded.sum(axis=0)
 
         # Append "Anders" to the filtered data
-        viz_data_filtered.loc["Anders"] = anders_values
+        viz_data_filtered.loc["Overig"] = anders_values
 
         # Sort columns based on total sums
         s = viz_data_filtered.sum()
         viz_data_filtered = viz_data_filtered[s.sort_values(ascending=False).index]
 
-        # Ensure "Anders" is at the bottom
-        viz_data_filtered = viz_data_filtered.sort_index(ascending=True, key=lambda x: x == "Anders")
+        # Ensure "Overig" is at the bottom
+        viz_data_filtered = viz_data_filtered.sort_index(ascending=True, key=lambda x: x == "Overig")
 
         viz_data = viz_data_filtered
     else:
@@ -483,10 +483,10 @@ def bar_plot_per_province(data, year=2023, indicator='CO2', prov='Friesland', no
         main_data = viz_data[viz_data['cumulative_sum'] <= threshold_val]
         other_data = viz_data[viz_data['cumulative_sum'] > threshold_val]
 
-        # Combine other data into one category "Anders"
+        # Combine other data into one category "Overig"
         if not other_data.empty :
             others_sum = other_data[col_names[ind_index]].sum()
-            others_row = {'Goederengroep' : 'Anders', col_names[ind_index] : others_sum}
+            others_row = {'Goederengroep' : 'Overig', col_names[ind_index] : others_sum}
             main_data = pd.concat([main_data, pd.DataFrame([others_row])], ignore_index=True)
 
         # Drop cumulative sum column
@@ -513,7 +513,7 @@ def bar_plot_per_province(data, year=2023, indicator='CO2', prov='Friesland', no
 
     # Add percentage labels to bars
     for index, value in enumerate(main_data[col_names[ind_index]]) :
-        plt.text(value, index, f'{main_data["percentage"].iloc[index]:.2f}%', va='center')
+        plt.text(value, index, f'{main_data["percentage"].iloc[index]:.1f}%', va='center')
 
     plt.tight_layout()
 
