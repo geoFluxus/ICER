@@ -534,10 +534,10 @@ if __name__ == '__main__':
     inds = ['MKI', 'CO2']
     col_names = ['MKI total (mln euro)','CO2 emissions total (kt)']
     dat = calculate_impacts(all_data_file, emissions_file, groups_file)
-    dat.to_excel('all_data.xlsx')
+    dat.to_excel('./results/indicator3/all_data.xlsx')
     # time_plot_per_province(dat)
     # bar_plot_per_province(dat)
-    # construct_impacts_file()
+    # # construct_impacts_file()
     for i in [0,1]:
         visualize_full_results(dat, filter_groups=None, prov=None, plt_type='bar', indicator = inds[i])
     # visualize_impacts(dat, indicator = inds[i], col_name = col_names[i], jaar = 2023, result_path = './results/results_per_province/')    #

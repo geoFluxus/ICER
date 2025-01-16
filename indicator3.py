@@ -568,10 +568,10 @@ def plot_simplified_bars(dat, prov='Friesland', year=2023, normalize=True, fonts
     labels = [s.get_text() if len(s.get_text()) < 37 else s.get_text()[:37] + '..' for s in labels]
     fig.set_yticklabels(labels, fontsize=fontsize)
     fig.set_ylabel('Goederengoep', fontsize=fontsize)
-    _, ymax = fig.get_ylim()
+    _, xmax = fig.get_xlim()
     xticksize = 5 if normalize else 100
-    fig.set_xticks(range(xticksize,int(ymax/xticksize + 1)*xticksize,xticksize),
-                   range(xticksize,int(ymax/xticksize + 1)*xticksize,xticksize), fontsize=fontsize)
+    fig.set_xticks(range(xticksize,int(xmax/xticksize + 1)*xticksize,xticksize),
+                   range(xticksize,int(xmax/xticksize + 1)*xticksize,xticksize), fontsize=fontsize)
     fig.set_xlabel(f"Aandeel van de kritieke grondstoffen in {prov} (%)", fontsize=fontsize)
     plt.tight_layout()
     if show: plt.show()
@@ -600,11 +600,11 @@ if __name__ == '__main__':
     result_path = './results/critical_raw_materials/'
 
     # CALCULATE DATA
-    # if not os.path.exists(result_path):
-    #     os.makedirs(result_path)
-    # data = calculate_crm_shares_per_province()
-    # # print(data)
-    # data.to_excel(result_path + 'material_contents.xlsx')
+    if not os.path.exists(result_path):
+        os.makedirs(result_path)
+    data = calculate_crm_shares_per_province()
+    # print(data)
+    data.to_excel(result_path + 'material_contents.xlsx')
 
 
     data = pd.read_excel(result_path + 'material_contents.xlsx')
@@ -624,13 +624,13 @@ if __name__ == '__main__':
     euros = euro_waarde[['Provincie', 'Goederengroep','Inkoop_waarde']]
 
     for p in provs:
-        for i in [False]:
-            plot_heatmap(data, indicators, prov=p, indicative=False, filter_province=i, values=euros)
-            if not i:
-                plot_heatmap(data, indicators, prov=p, indicative=False, filter_province=i)
-        groups = plot_heatmap(data, indicators, prov=p, indicative=False, filter_province=True, save=False)
-        goederen_province_fractions(euros, show=False, grayed_out=True, filter_groups=groups, plt_legend=False,
-                                    prov=p)
+        # for i in [False]:
+        #     plot_heatmap(data, indicators, prov=p, indicative=False, filter_province=i, values=euros)
+        #     if not i:
+        #         plot_heatmap(data, indicators, prov=p, indicative=False, filter_province=i)
+        # groups = plot_heatmap(data, indicators, prov=p, indicative=False, filter_province=True, save=False)
+        # goederen_province_fractions(euros, show=False, grayed_out=True, filter_groups=groups, plt_legend=False,
+        #                             prov=p)
         plot_simplified_bars(data, prov=p,normalize=True)
     # crm_province_fractions(data, indicators, filter_endangered=True, prov=p)
     # mats = crm_province_fractions(data, indicators, filter_province=True, prov=p)

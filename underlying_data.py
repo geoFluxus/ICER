@@ -1,5 +1,5 @@
 import pandas as pd
-
+from indicator3 import crm_names
 def stream_finder(file_path, prov, column, num_entries_per_year = 5, year=None, return_cols = None, prnt=False,
                   afval=False, wide_form = True):
     df = pd.read_excel(file_path)
@@ -13,6 +13,17 @@ def stream_finder(file_path, prov, column, num_entries_per_year = 5, year=None, 
     if 'Jaar' in list(df.columns):
         df = df[df['Jaar'] == year] if year is not None else df
     df = df[return_cols]
+    if column == 'RMI' or column == 'RMC':
+        df = df[df[return_cols[1]] != 'Electricity']
+        txt = 'Grondstofgroep (kton)'
+    elif column == 'DMI' or column == 'DMC' or 'CO2' in column:
+        txt = return_cols[1] + ' (kton)'
+    elif 'MKI' in column:
+        txt = return_cols[1] + ' (mln euro)'
+    else:
+        txt = return_cols[1]
+    df.rename(columns={return_cols[1]: txt}, inplace=True)
+    return_cols[1] = txt
 
     if num_entries_per_year is not None:
         if year is None and 'Jaar' in list(df.columns):
@@ -53,8 +64,8 @@ def create_largest_streams_files():
                       ['euralcode', 'euralcode naam', 'verwerkingsmethodecode LMA', 'verwerkingsmethode',
                        'verwerkingsgroep', 'gewicht (kg)', 'Alternatieve verwerkingsgroep', 'Alternatieve code',
                        'Beschrijving alternatieve code'], 50],
-            # 'CO2': ['CO2 emissions total (kt)','./results/indicator3/CO2_alle_provincies_percentage.xlsx', None, 20],
-            # 'MKI': ['MKI total (mln euro)', './results/indicator3/MKI_alle_provincies_percentage.xlsx', None, 20],
+            'CO2': ['CO2 emissions total (kt)','./results/indicator3/all_data.xlsx', None, 20],
+            'MKI': ['MKI total (mln euro)', './results/indicator3/all_data.xlsx', None, 20],
         }
 
         dfs = {}
@@ -68,6 +79,14 @@ def create_largest_streams_files():
 
         print(f'Done with {p}')
 
+def create_crm_df(prov='Friesland', sourcefile='./results/critical_raw_materials/material_contents.xlsx'):
+    df = pd.read_excel(sourcefile)
+    df = df[(df['Provincie'] == prov) & (df[crm_names].sum(axis=1) != 0)]
+    df.sort_values(by=['Jaar', 'Goederengroep'])
+    df['Eenheid'] = 'kg'
+    df = df[['Jaar', 'Goederengroep', 'Eenheid'] + crm_names]
+    return df
+
 def create_underlying_data_files():
     for p in pd.read_excel('./results/indicator1/all_data.xlsx')['Provincie'].unique():
         indicators = {
@@ -79,14 +98,19 @@ def create_underlying_data_files():
                       ['euralcode', 'euralcode naam', 'verwerkingsmethodecode LMA', 'verwerkingsmethode',
                        'verwerkingsgroep', 'gewicht (kg)', 'Alternatieve verwerkingsgroep', 'Alternatieve code',
                        'Beschrijving alternatieve code'], 50],
-            # 'CO2': ['CO2 emissions total (kt)','./results/indicator3/CO2_alle_provincies_percentage.xlsx', None, 20],
-            # 'MKI': ['MKI total (mln euro)', './results/indicator3/MKI_alle_provincies_percentage.xlsx', None, 20],
+            'CO2': ['CO2 emissions total (kt)','./results/indicator3/all_data.xlsx', None, 20],
+            'MKI': ['MKI total (mln euro)', './results/indicator3/all_data.xlsx', None, 20],
+            'Leveringszekerheid': []
         }
 
         dfs = {}
         for i in indicators:
-            data = stream_finder(file_path=indicators[i][1], prov=p, column=indicators[i][0], return_cols=indicators[i][2],
-                                 num_entries_per_year=None, year=None)
+            if i != 'Leveringszekerheid':
+
+                data = stream_finder(file_path=indicators[i][1], prov=p, column=indicators[i][0], return_cols=indicators[i][2],
+                                     num_entries_per_year=None, year=None)
+            else:
+                data = create_crm_df(prov=p)
             dfs[i] = data
         with pd.ExcelWriter(f'./results/underlying_data/{p} data.xlsx') as writer:
             for i in dfs:

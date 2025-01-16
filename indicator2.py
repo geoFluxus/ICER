@@ -112,11 +112,13 @@ export_data = pd.merge(all_data, rladder_full, how='left')
 export_data = pd.merge(export_data, ewc_names, how='left')
 export_data = pd.merge(export_data, process_names, how='left')
 
-export_data = export_data[['province', 'ewc_code', 'ewc_name', 'code', 'name', 'R-description', 'sum', 'code_alt']]
+export_data = export_data[['province', 'ewc_code', 'ewc_name', 'code', 'name', 'R-description', 'sum', 'code_alt', 'R-rate_alt']]
 export_data = pd.merge(export_data, process_names, how='left', left_on='code_alt', right_on='code')
+
+export_data = pd.merge(export_data, rladder_full, how='left', left_on='R-rate_alt', right_on='R-rate')
 print(export_data.columns)
-export_data = export_data[['province', 'ewc_code', 'ewc_name', 'code_x', 'name_x', 'R-description',
-       'sum','code_y', 'code_alt', 'name_y']]
+export_data = export_data[['province', 'ewc_code', 'ewc_name', 'code_x', 'name_x', 'R-description_x',
+       'sum','R-description_y','code_y', 'name_y']]
 export_data.columns = ['provincie', 'euralcode', 'euralcode naam', 'verwerkingsmethodecode LMA', 'verwerkingsmethode',
                        'verwerkingsgroep', 'gewicht (kg)','Alternatieve verwerkingsgroep', 'Alternatieve code','Beschrijving alternatieve code']
 
@@ -179,7 +181,6 @@ for province in provinces:
         labels += list(node_heights[i])
         nodes_y.append(list(arr))
     #align I
-    print(labels)
     nodes_y[0][-1] = nodes_y[1][-1]
     dimensions = {
         'label': ['' for i in range(18)],# ranks + ranks,
@@ -189,8 +190,6 @@ for province in provinces:
         'y': nodes_y[0] + nodes_y[1],
         #'align': ["left"] * len(ranks) + ["right"] * len(ranks)
     }
-    print(len(dimensions['x']))
-    print(len(dimensions['y']))
 
     links = {
         'source': [ranks.index(i) for i in data['current_rank']],
