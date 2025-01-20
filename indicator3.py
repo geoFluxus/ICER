@@ -212,8 +212,9 @@ def scatter_per_province(dat, indicators, facet = False, size_col = 'relative_cr
             plt.show()
 
 def crm_province_fractions(viz_data, mat_inds, filter_endangered = False, filter_province = False, show = False, out_dir = './results/critical_raw_materials/',
-                           plot_values = True, prov='Zuid-Holland', grayed_out=False):
-    plt_legend = False if (filter_endangered or filter_province) else True
+                           plot_values = True, prov='Zuid-Holland', grayed_out=False, annot=True, plt_legend=None):
+    if plt_legend is None:
+        plt_legend = False if (filter_endangered or filter_province) else True
     indicators = mat_inds.sort_values(by='product', ascending=False)
     indicators = indicators[~indicators['Materiaal'].isna()]
     most_endangered = list(indicators['Materiaal'][:10])
@@ -224,7 +225,7 @@ def crm_province_fractions(viz_data, mat_inds, filter_endangered = False, filter
     if plot_values:
         val_data = viz_data.copy()
 
-    viz_data = viz_data / viz_data.sum()
+    viz_data = 100 * viz_data / viz_data.sum()
     viz_data = viz_data.T
     # print(viz_data)
     viz_data = viz_data[viz_data.index.isin(indicators['Materiaal'][(indicators['Economic Importance (EI)'] >= 2.8) & (
@@ -251,8 +252,27 @@ def crm_province_fractions(viz_data, mat_inds, filter_endangered = False, filter
         cols = styles.cols
     fig = viz_data.plot.barh(stacked=True, color=cols,
                              figsize=(20, 10), legend=plt_legend)  # color = styles.colors_list_3)#, alpha=0.9)
+    if plt_legend:
+        fig.legend(loc='center left', bbox_to_anchor=(1,0.5))
+    fig.set(xlim=(0,100))
 
-    fig.set(xlim=(0,1))
+    if annot:
+        ind = 0
+        for p in fig.patches:
+            width, height = p.get_width(), p.get_height()
+            if grayed_out:
+                print_val = True if int(ind / 10) == 0 else False
+            else:
+                print_val = True
+            x, y = p.get_xy()
+            fig.text(x + width / 2,
+                     y + height / 2,
+                     '{:.0f}%'.format(width) if (width > 1.5 and print_val) else '',
+                     horizontalalignment='center',
+                     verticalalignment='center',
+                     fontsize=12)
+            ind += 1
+
     fig.set_facecolor('gainsboro')
     plt.tight_layout()
 
@@ -623,16 +643,19 @@ if __name__ == '__main__':
     euro_waarde['Inkoop_waarde'] = euro_waarde['Invoer_nationaal'] + euro_waarde['Invoer_internationaal']
     euros = euro_waarde[['Provincie', 'Goederengroep','Inkoop_waarde']]
 
-    for p in provs:
-        # for i in [False]:
-        #     plot_heatmap(data, indicators, prov=p, indicative=False, filter_province=i, values=euros)
-        #     if not i:
-        #         plot_heatmap(data, indicators, prov=p, indicative=False, filter_province=i)
-        # groups = plot_heatmap(data, indicators, prov=p, indicative=False, filter_province=True, save=False)
-        # goederen_province_fractions(euros, show=False, grayed_out=True, filter_groups=groups, plt_legend=False,
-        #                             prov=p)
-        plot_simplified_bars(data, prov=p,normalize=True)
-    # crm_province_fractions(data, indicators, filter_endangered=True, prov=p)
+    # for p in provs:
+    #     for i in [False]:
+    #         plot_heatmap(data, indicators, prov=p, indicative=False, filter_province=i, values=euros)
+    #         if not i:
+    #             plot_heatmap(data, indicators, prov=p, indicative=False, filter_province=i)
+    #     groups = plot_heatmap(data, indicators, prov=p, indicative=False, filter_province=True, save=False)
+    #     goederen_province_fractions(euros, show=False, grayed_out=True, filter_groups=groups, plt_legend=False,
+    #                                 prov=p)
+    #     plot_simplified_bars(data, prov=p,normalize=True)
+    crm_province_fractions(data, indicators, prov='Zuid-Holland')
+    crm_province_fractions(data, indicators, prov='Zuid-Holland', filter_province=True, plt_legend=True)
+    crm_province_fractions(data, indicators, prov='Zuid-Holland', filter_endangered=True, plt_legend=True)
+
     # mats = crm_province_fractions(data, indicators, filter_province=True, prov=p)
     # crm_province_fractions(data, indicators, prov=p)
     # # print(mats)
