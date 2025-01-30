@@ -1,7 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-data = pd.read_csv('./data/CBS/181024 Tabel Regionale stromen 2015-2022 provincie CE67 GC6.csv', delimiter=';', decimal=',', encoding='cp1252')
+data = pd.read_csv('../data/CBS/181024 Tabel Regionale stromen 2015-2022 provincie CE67 GC6.csv', delimiter=';', decimal=',', encoding='cp1252')
 
+#Shows which gebruikersgroepen are most prominent for each province
 for i in ['Brutogew', 'Sf_brutogew', 'Waarde', 'Sf_waarde']:
     data[i] = data[i].str.replace(',', '.')
     data[i] = data[i].str.replace(' ', '0')

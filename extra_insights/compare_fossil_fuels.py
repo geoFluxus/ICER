@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-data = pd.read_excel('./results/indicator1/all_data.xlsx')
+data = pd.read_excel('../results/goods_and_raw_materials/all_data.xlsx')
 
 fossil_groups = [
         'Kunstmeststoffen en stikstofverbindingen (behalve natuurlijke meststoffen)',

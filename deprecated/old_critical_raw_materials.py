@@ -15,10 +15,10 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 colors = pd.DataFrame.from_dict(styles.COLORS, orient='index', columns=['colour'])
 plt.rcParams.update(styles.params)
 
-crm = pd.read_csv('data/TNO/CRM_per_kg_CE25.csv', delimiter=';', decimal=",")
-indicators = pd.read_csv('data/TNO/Supply_security_indicators.csv', delimiter=';', decimal=",")
+crm = pd.read_csv('../data/TNO/CRM_per_kg_CE25.csv', delimiter=';', decimal=",")
+indicators = pd.read_csv('../data/TNO/Supply_security_indicators.csv', delimiter=';', decimal=",")
 
-dmi_file = 'results/indicator1/all_data.xlsx'
+dmi_file = '../results/goods_and_raw_materials/all_data.xlsx'
 if os.path.isfile(dmi_file):
     dmi = pd.read_excel(dmi_file)
 else:

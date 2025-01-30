@@ -1,10 +1,10 @@
 import pandas as pd
 
 def create_distribution_list(codes, group_name, good_files=[2]):
-    goods_descriptions = pd.read_excel('./data/geoFluxus/Goederencodelijst_2023.xlsx')
+    goods_descriptions = pd.read_excel('../data/geoFluxus/Goederencodelijst_2023.xlsx')
     goods_amounts = pd.DataFrame()
     for i in good_files:
-        temp = pd.read_csv(f'./data/geoFluxus/CBS_productdata_2023_{i}.csv', delimiter=';')
+        temp = pd.read_csv(f'../data/geoFluxus/CBS_productdata_2023_{i}.csv', delimiter=';')
         goods_amounts = pd.concat([goods_amounts, temp])
 
     codes_prefix = ['GN' + i for i in codes]
@@ -27,20 +27,20 @@ def create_distribution_list(codes, group_name, good_files=[2]):
     print('Invoer', df['TotaleInvoerwaarde_1'].sum())
     print('Uitvoer', df['TotaleUitvoerwaarde_3'].sum())
 
-    df.to_excel(f'./data/geoFluxus/{group_name}_percentages.xlsx', index=False)
+    df.to_excel(f'../data/geoFluxus/{group_name}_percentages.xlsx', index=False)
 
 def find_goods_per_nst_code(category = 24):
-    names = pd.read_excel('./data/geoFluxus/CBS_names.xlsx', sheet_name='CBS_code_merger')
+    names = pd.read_excel('../data/geoFluxus/CBS_names.xlsx', sheet_name='CBS_code_merger')
     nst_code = names[names['Goederengroep_nr'] == category]['NST_code'].values[0]
     print(nst_code)
-    conversions = pd.read_excel('./data/geoFluxus/NST2007_CN2023_Table.xlsx')
+    conversions = pd.read_excel('../data/geoFluxus/NST2007_CN2023_Table.xlsx')
     codes = conversions[conversions['NST2007_CODE'] == nst_code][['CN2023_CODE', 'CN2023_NAME']]
     code_names = codes.copy()
     code_names['GN'] = codes['CN2023_CODE'].str.replace(' ', '').apply(lambda x: 'GN' + x)
     codes = list(code_names['GN'])
     goods_amounts = pd.DataFrame()
     for i in range(1,5):
-        temp = pd.read_csv(f'./data/geoFluxus/CBS_productdata_2023_{i}.csv', delimiter=';')
+        temp = pd.read_csv(f'../data/geoFluxus/CBS_productdata_2023_{i}.csv', delimiter=';')
         goods_amounts = pd.concat([goods_amounts, temp])
     goods = goods_amounts[goods_amounts['GN'].isin(codes)].groupby('GN')[['TotaleInvoerwaarde_1', 'TotaleUitvoerwaarde_3']].sum()
     goods = pd.merge(goods, code_names, on='GN')
@@ -50,7 +50,7 @@ def create_nst_goods_excel(categories = [24,52,55,56,57,58,59,60,67]):
     dfs = {}
     for i in categories:
         dfs[i] = find_goods_per_nst_code(i)
-    with pd.ExcelWriter(f'./data/geoFluxus/product_streams_2023.xlsx') as writer:
+    with pd.ExcelWriter(f'../data/geoFluxus/product_streams_2023.xlsx') as writer:
         for i in dfs:
             dfs[i].to_excel(writer, sheet_name=str(i), index=False)
 

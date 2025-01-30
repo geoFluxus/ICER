@@ -106,7 +106,7 @@ def calculate_impacts(data_file='', impact_file='', group_relation_file=''):
     data = data[data['Goederengroep_nr'] != 67]
     return data
 
-def visualize_impacts(data, result_path = 'results/indicator3/', indicator = '', col_name='', jaar = 2023):
+def visualize_impacts(data, result_path = 'results/environmental_indicators/', indicator = '', col_name='', jaar = 2023):
     params = styles.params
     plt.rcParams.update(params)
     data = data[data['Jaar'] == jaar]
@@ -534,7 +534,7 @@ if __name__ == '__main__':
     inds = ['MKI', 'CO2']
     col_names = ['MKI total (mln euro)','CO2 emissions total (kt)']
     dat = calculate_impacts(all_data_file, emissions_file, groups_file)
-    dat.to_excel('./results/indicator3/all_data.xlsx')
+    dat.to_excel('./results/environmental_indicators/all_data.xlsx')
     # time_plot_per_province(dat)
     # bar_plot_per_province(dat)
     # # construct_impacts_file()

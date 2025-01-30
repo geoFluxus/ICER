@@ -42,7 +42,7 @@ def calculate_crm_shares_per_province():
     # print(cn_to_nst_code[cn_to_nst_code[cn_code_col].astype(str).str.len() != 8])
     # print(cn_to_nst_code)
     #cn_to_nst_code[cn_code_col] = cn_to_nst_code['CN2024_CODE'].astype(str).zfill(8)
-    dmi = pd.read_excel('results/indicator1/all_data.xlsx')[['Goederengroep', 'Provincie', 'Jaar', 'DMI']]
+    dmi = pd.read_excel('results/goods_and_raw_materials/all_data.xlsx')[['Goederengroep', 'Provincie', 'Jaar', 'DMI']]
     dmi = dmi[dmi['Jaar'] == 2023]
 
 
@@ -636,33 +636,26 @@ if __name__ == '__main__':
     criticals = plt_indicators[(indicators['Economic Importance (EI)'] >= 2.8) & (indicators['Supply Risk (SR)'] >= 1)]
     materials = list(criticals['Materiaal'].dropna())
     provs = list(data['Provincie'].unique())
-    euro_waarde = pd.read_excel('./results/indicator1/euro_data_all.xlsx')
+    euro_waarde = pd.read_excel('./results/goods_and_raw_materials/euro_data_all.xlsx')
     # for p in provs:
     p = 'Zuid-Holland'
     euro_waarde = euro_waarde[euro_waarde['Jaar'] == 2023]
     euro_waarde['Inkoop_waarde'] = euro_waarde['Invoer_nationaal'] + euro_waarde['Invoer_internationaal']
     euros = euro_waarde[['Provincie', 'Goederengroep','Inkoop_waarde']]
 
-    # for p in provs:
-    #     for i in [False]:
-    #         plot_heatmap(data, indicators, prov=p, indicative=False, filter_province=i, values=euros)
-    #         if not i:
-    #             plot_heatmap(data, indicators, prov=p, indicative=False, filter_province=i)
-    #     groups = plot_heatmap(data, indicators, prov=p, indicative=False, filter_province=True, save=False)
-    #     goederen_province_fractions(euros, show=False, grayed_out=True, filter_groups=groups, plt_legend=False,
-    #                                 prov=p)
-    #     plot_simplified_bars(data, prov=p,normalize=True)
-    crm_province_fractions(data, indicators, prov='Zuid-Holland')
-    crm_province_fractions(data, indicators, prov='Zuid-Holland', filter_province=True, plt_legend=True)
-    crm_province_fractions(data, indicators, prov='Zuid-Holland', filter_endangered=True, plt_legend=True)
+    for p in provs:
+        for i in [False]:
+            plot_heatmap(data, indicators, prov=p, indicative=False, filter_province=i, values=euros)
+            if not i:
+                plot_heatmap(data, indicators, prov=p, indicative=False, filter_province=i)
+        groups = plot_heatmap(data, indicators, prov=p, indicative=False, filter_province=True, save=False)
+        goederen_province_fractions(euros, show=False, grayed_out=True, filter_groups=groups, plt_legend=False,
+                                    prov=p)
+        plot_simplified_bars(data, prov=p,normalize=True)
+    
+    # Old visualisations:
+    # crm_province_fractions(data, indicators, prov='Zuid-Holland')
+    # crm_province_fractions(data, indicators, prov='Zuid-Holland', filter_province=True, plt_legend=True)
+    # crm_province_fractions(data, indicators, prov='Zuid-Holland', filter_endangered=True, plt_legend=True)
 
-    # mats = crm_province_fractions(data, indicators, filter_province=True, prov=p)
-    # crm_province_fractions(data, indicators, prov=p)
-    # # print(mats)
-    # # print(list(mats))
-    # crm_province_fractions(data, indicators, filter_endangered=True, prov=p, grayed_out=True)
-    # crm_province_fractions(data, indicators, filter_province=True, prov=p, grayed_out=True)
-    #
-    # create_group_distribution(data, indicators, filter_endangered=True, prov=p)
-    # create_group_distribution(data, indicators, filter_province=True, prov=p, most_used_mats=list(mats))
-    # create_group_distribution(data, indicators, prov=p)
+

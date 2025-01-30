@@ -6,85 +6,19 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 pd.options.display.width = 0
 pd.set_option('display.max_rows', None)
 
-"""This script converts the dummy CBS file into the standard CBS data template"""
-
-corop_to_province = {
-'Oost-Groningen': 'Groningen',
-'Delfzijl e.o.': 'Groningen',
-'Overig Groningen': 'Groningen',
-'Noord-Friesland': 'Friesland',
-'Zuidwest-Friesland': 'Friesland',
-'Zuidoost-Friesland': 'Friesland',
-'Noord-Drenthe': 'Drenthe',
-'Zuidoost-Drenthe': 'Drenthe',
-'Zuidwest-Drenthe': 'Drenthe',
-'Noord-Overijssel': 'Overijssel',
-'Zuidwest-Overijssel': 'Overijssel',
-'Twente': 'Overijssel',
-'Veluwe': 'Gelderland',
-'Achterhoek': 'Gelderland',
-'Aggl. Arnhem/Nijmegen': 'Gelderland',
-'Zuidwest-Gelderland': 'Gelderland',
-'Utrecht-West': 'Utrecht',
-'Stadsgewest Amersfoort': 'Utrecht',
-'Stadsgewest Utrecht': 'Utrecht',
-'Zuidoost-Utrecht': 'Utrecht',
-'Kop van Noord-Holland': 'Noord-Holland',
-'Alkmaar e.o.': 'Noord-Holland',
-'IJmond': 'Noord-Holland',
-'Agglomeratie Haarlem': 'Noord-Holland',
-'Overig Agglomeratie Amsterdam': 'Noord-Holland',
-'Zaanstreek': 'Noord-Holland',
-'Haarlemmermeer e.o.': 'Noord-Holland',
-'Groot-Amsterdam': 'Noord-Holland',
-'Amsterdam': 'Noord-Holland',
-'Edam-Volendam e.o.': 'Noord-Holland',
-'Het Gooi en Vechtstreek': 'Noord-Holland',
-
-'Agglomeratie Leiden en Bollenstreek': 'Zuid-Holland',
-r"Agglomeratie’s-Gravenhage (Excl. Zoetermeer)": "Zuid-Holland",
-'Zoetermeer': 'Zuid-Holland',
-'Delft en Westland': 'Zuid-Holland',
-'Oost-Zuid-Holland': 'Zuid-Holland',
-'Rijnmond': 'Zuid-Holland',
-'Overig Groot-Rijnmond': 'Zuid-Holland',
-'Drechtsteden': 'Zuid-Holland',
-'Overig Zuidoost-Zuid-Holland': 'Zuid-Holland',
-'Zeeuwsch-Vlaanderen': "Zeeland",
-'Overig Zeeland': "Zeeland",
-'West-Noord-Brabant': "Noord-Brabant",
-'Midden-Noord-Brabant': "Noord-Brabant",
-r"Stadsgewest ’s-Hertogenbosch": 'Noord-Brabant',
-'Overig Noordoost-Noord-Brabant': "Noord-Brabant",
-'Zuidoost-Noord-Brabant': "Noord-Brabant",
-'Noord-Limburg': "Limburg",
-'Midden-Limburg': "Limburg",
-'Zuid-Limburg': "Limburg",
-'Almere': "Flevoland",
-'Flevoland-Midden': "Flevoland",
-'Noordoostpolder en Urk': "Flevoland"
-}
+"""This script converts the CBS file into the used CBS data template"""
 
 def correct_data_gaps(data):
-    # Filter the missing data for year 2022 and Suikerbieten
-    print(data.columns)
-    #print(data)
-    # missing_data = [data[(data["Jaar"] == 2022) & (data["Goederengroep_naam"] == "Suikerbieten")],
-    #                 data[(data["Jaar"] == 2015) & (data["Goederengroep_naam"] == "Rauwe melk van runderen, schapen en geiten")],
-    #                 data[(data["Jaar"] == 2022) &
-    #                      (data["Goederengroep_naam"] == "Ruwe aardolie") &
-    #                      (data['Provincienaam'].isin(['Zuid-Holland', 'Noord-Brabant']))],
-    #
-    #                 ]
+    # Filter the missing data for year 2015 and Rauwe melk
     missing_data = [
                     data[(data["Jaar"] == 2015) & (data["Goederengroep_naam"] == "Rauwe melk van runderen, schapen en geiten")]
                     ]
 
-    # Loop through each missing entry and fill it with the previous year's value
+    # Loop through each missing entry and fill it with the 2016 value
     for dat in missing_data:
         for index, row in dat.iterrows():
-            # Find the previous year's value for the same region and good group
-            year = 2021 if row['Jaar'] == 2022 else 2016
+            # Find the next year's value for the same region and good group
+            year = 2016
             previous_year_value = data[
                 (data["Jaar"] == year) &
                 (data["Provincienaam"] == row["Provincienaam"]) &
@@ -97,31 +31,22 @@ def correct_data_gaps(data):
             if len(previous_year_value) > 0:
                 for i in range(len(vals)):
                     data.at[index, vals[i]] = previous_year_value[0][i]
-    print(data)
 
     return data
 
-def run(data, filename, corop=False, fill_data_gaps=False):
+def run(data, filename, fill_data_gaps=False):
 
     # filter out totals from the gebruiksgroep_naam, group by
     data = data[data['Gebruiksgroep_naam'] != 'Totaal']
 
     # drop unnecessary columns
-    if not corop:
-        data = data.drop(columns=['Stroom_nr', 'Provincie_nr', 'Gebruiksgroep_nr', 'Gebruiksgroep_naam'])
+    data = data.drop(columns=['Stroom_nr', 'Provincie_nr', 'Gebruiksgroep_nr', 'Gebruiksgroep_naam'])
 
-        #If there are columns left empty; typecast all values to floats
-        for i in ['Brutogew', 'Sf_brutogew', 'Waarde', 'Sf_waarde']:
-            data[i] = data[i].str.replace(',', '.')
-            data[i] = data[i].str.replace(' ', '0')
-            data[i] = data[i].astype(float)
-    else:
-        for i in ['Brutogew', 'Sf_brutogew', 'Waarde', 'Sf_waarde']:
-            data[i] = data[i].str.replace(',', '.')
-            data[i] = data[i].str.replace(' ', '0')
-            data[i] = data[i].astype(float)
-        data['Provincienaam'] = data['Regionaam'].apply(lambda x: corop_to_province[x])
-        data = data.drop(columns=['Stroom_nr', 'Regionr', 'Gebruiksgroep_nr', 'Gebruiksgroep_naam'])
+    #If there are columns left empty; typecast all values to floats
+    for i in ['Brutogew', 'Sf_brutogew', 'Waarde', 'Sf_waarde']:
+        data[i] = data[i].str.replace(',', '.')
+        data[i] = data[i].str.replace(' ', '0')
+        data[i] = data[i].astype(float)
 
 
     # group by

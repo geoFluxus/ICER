@@ -1,5 +1,5 @@
 import pandas as pd
-from indicator3 import crm_names
+from critical_raw_materials import crm_names
 def stream_finder(file_path, prov, column, num_entries_per_year = 5, year=None, return_cols = None, prnt=False,
                   afval=False, wide_form = True):
     df = pd.read_excel(file_path)
@@ -54,18 +54,18 @@ def stream_finder(file_path, prov, column, num_entries_per_year = 5, year=None, 
 
 
 def create_largest_streams_files():
-    for p in pd.read_excel('./results/indicator1/all_data.xlsx')['Provincie'].unique():
+    for p in pd.read_excel('./results/goods_and_raw_materials/all_data.xlsx')['Provincie'].unique():
         indicators = {
-            'DMI': ['DMI','./results/indicator1/all_data.xlsx', None, 7],
-            'DMC': ['DMC','./results/indicator1/all_data.xlsx', None, 7],
-            'RMI': ['RMI','./results/indicator1/raw_materials_all.xlsx', ['Jaar','level_2', 'RMI'], 7],
-            'RMC': ['RMC','./results/indicator1/raw_materials_all.xlsx', ['Jaar','level_2', 'RMC'], 7],
-            'Afval': ['gewicht (kg)',f'./results/indicator2/results_per_province/{p}/Ind.2_{p}_afvalstatistiek.xlsx',
+            'DMI': ['DMI','./results/goods_and_raw_materials/all_data.xlsx', None, 7],
+            'DMC': ['DMC','./results/goods_and_raw_materials/all_data.xlsx', None, 7],
+            'RMI': ['RMI','./results/goods_and_raw_materials/raw_materials_all.xlsx', ['Jaar','level_2', 'RMI'], 7],
+            'RMC': ['RMC','./results/goods_and_raw_materials/raw_materials_all.xlsx', ['Jaar','level_2', 'RMC'], 7],
+            'Afval': ['gewicht (kg)',f'./results/waste/results_per_province/{p}/Ind.2_{p}_afvalstatistiek.xlsx',
                       ['euralcode', 'euralcode naam', 'verwerkingsmethodecode LMA', 'verwerkingsmethode',
                        'verwerkingsgroep', 'gewicht (kg)', 'Alternatieve verwerkingsgroep', 'Alternatieve code',
                        'Beschrijving alternatieve code'], 50],
-            'CO2': ['CO2 emissions total (kt)','./results/indicator3/all_data.xlsx', None, 20],
-            'MKI': ['MKI total (mln euro)', './results/indicator3/all_data.xlsx', None, 20],
+            'CO2': ['CO2 emissions total (kt)','./results/environmental_indicators/all_data.xlsx', None, 20],
+            'MKI': ['MKI total (mln euro)', './results/environmental_indicators/all_data.xlsx', None, 20],
         }
 
         dfs = {}
@@ -88,18 +88,18 @@ def create_crm_df(prov='Friesland', sourcefile='./results/critical_raw_materials
     return df
 
 def create_underlying_data_files():
-    for p in pd.read_excel('./results/indicator1/all_data.xlsx')['Provincie'].unique():
+    for p in pd.read_excel('./results/goods_and_raw_materials/all_data.xlsx')['Provincie'].unique():
         indicators = {
-            'DMI': ['DMI','./results/indicator1/all_data.xlsx', None, 7],
-            'DMC': ['DMC','./results/indicator1/all_data.xlsx', None, 7],
-            'RMI': ['RMI','./results/indicator1/raw_materials_all.xlsx', ['Jaar','level_2', 'RMI'], 7],
-            'RMC': ['RMC','./results/indicator1/raw_materials_all.xlsx', ['Jaar','level_2', 'RMC'], 7],
-            'Afval': ['gewicht (kg)',f'./results/indicator2/results_per_province/{p}/Ind.2_{p}_afvalstatistiek.xlsx',
+            'DMI': ['DMI','./results/goods_and_raw_materials/all_data.xlsx', None, 7],
+            'DMC': ['DMC','./results/goods_and_raw_materials/all_data.xlsx', None, 7],
+            'RMI': ['RMI','./results/goods_and_raw_materials/raw_materials_all.xlsx', ['Jaar','level_2', 'RMI'], 7],
+            'RMC': ['RMC','./results/goods_and_raw_materials/raw_materials_all.xlsx', ['Jaar','level_2', 'RMC'], 7],
+            'Afval': ['gewicht (kg)',f'./results/waste/results_per_province/{p}/Ind.2_{p}_afvalstatistiek.xlsx',
                       ['euralcode', 'euralcode naam', 'verwerkingsmethodecode LMA', 'verwerkingsmethode',
                        'verwerkingsgroep', 'gewicht (kg)', 'Alternatieve verwerkingsgroep', 'Alternatieve code',
                        'Beschrijving alternatieve code'], 50],
-            'CO2': ['CO2 emissions total (kt)','./results/indicator3/all_data.xlsx', None, 20],
-            'MKI': ['MKI total (mln euro)', './results/indicator3/all_data.xlsx', None, 20],
+            'CO2': ['CO2 emissions total (kt)','./results/environmental_indicators/all_data.xlsx', None, 20],
+            'MKI': ['MKI total (mln euro)', './results/environmental_indicators/all_data.xlsx', None, 20],
             'Leveringszekerheid': []
         }
 
@@ -125,5 +125,5 @@ if __name__ == '__main__':
 
 
 
-    # data = stream_finder('./results/indicator1/all_data.xlsx', 'Zuid-Holland', 'DMI', prnt=True,
+    # data = stream_finder('./results/goods_and_raw_materials/all_data.xlsx', 'Zuid-Holland', 'DMI', prnt=True,
     #                      year=None, num_entries_per_year=7)

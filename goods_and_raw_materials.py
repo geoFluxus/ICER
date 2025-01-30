@@ -12,7 +12,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 def calcualte_DMC_Amsterdam_method(file='data/CBS/041224 Tabel Regionale stromen 2015-2022 provincie CE67 GC6.csv', year=2015,
                                    fill_gaps=True):
-
+    '''Function is depricated, is an alternative to the DMC for when the DMC does not show feasible results'''
 
     data = pd.read_csv(file, delimiter=';', decimal=',', encoding='cp1252')
     groups = [
@@ -638,20 +638,12 @@ if __name__ == '__main__':
         'Zeeland': ignore_fossil_groups
     }
     # create results folder for saving the result files
-    result_path = 'results/indicator1/'
+    result_path = 'results/goods_and_raw_materials/'
     if not os.path.exists(result_path):
         os.makedirs(result_path)
         print(f"All results will be saved in the directory {result_path}")
 
-    # ______________________________________________________________________________
-    #  ADJUSTABLE PARAMETERS
-    # ______________________________________________________________________________
 
-    # if the goal of this script is TO EXPORT analysis results
-    # goal = 'all'  # output of all data after the analysis, per province, per product
-    # goal = 'agg_per_type' # output of all data aggregated per biotiC/abiotiC type
-    # goal = 'agg_per_province'  # output of all data with product groups aggregated per province
-    # goal = 'export_per_province'  # output of all data in separate files per province
 
     # if the goal of this script is TO VISUALISE analysis results
     goal = 'rmc_all'  # visualise the DMC trend for all products
@@ -682,141 +674,18 @@ if __name__ == '__main__':
 
     # Call the calculate indicators function with raw material calculations enabled.
     dmcs, dmis, rmcs, rmis, all_data, all_raw_data, all_rm_data, all_eur_data = calculate_indicators(filepath, filename, years, raw_materials=True, goal='total',
-                                                                                                     )#turn_off_groups=turn_off)#, goal='total')
-    #filepath_ab = './results/indicator1/abiotisch/'
-    dmcs_ab, dmis_ab, rmcs_ab, rmis_ab, _,_,_,_ = calculate_indicators(filepath, filename, years, raw_materials=True)#, turn_off_groups=turn_off)
+                                                                                                     )
+
+    dmcs_ab, dmis_ab, rmcs_ab, rmis_ab, _,_,_,_ = calculate_indicators(filepath, filename, years, raw_materials=True)
     #Save euro data, and raw material data
     all_rm_data.to_excel(f'{result_path}raw_materials_all.xlsx')
     all_eur_data.to_excel(f'{result_path}euro_data_all.xlsx')
-    # final_dmis = dmis.groupby('Jaar')['DMI'].sum()
-    # print(final_dmis)
-    # final_dmcs = dmcs.groupby('Jaar')['DMC'].sum()
-    # print(final_dmcs)
-    #
-    # final_rmis = rmis.groupby('Jaar')['RMI'].sum()
-    # print(final_rmis)
-    # final_rmcs = rmcs.groupby('Jaar')['RMC'].sum()
-    # print(final_rmcs)
+
     visualize_results(per_province=False)
     visualise_per_province(one_plot=True)
 
     # ______________________________________________________________________________
     #  EXPORT RESULTS
     # ______________________________________________________________________________
-
-    #Temporary fix to export all data
-    goal = 'all'
-    if 'dmi' in goal:
-        dmis.to_excel(f'{result_path}{goal}.xlsx')
-        print(f'DMI calculation has been exported to {result_path}{goal}.xlsx')
-    if 'dmc' in goal:
-        dmcs.to_excel(f'{result_path}{goal}.xlsx')
-        print(f'DMC calculation has been exported to {result_path}{goal}.xlsx')
-    if 'all' in goal:
-        all_data.to_excel(f'{result_path}/all_data.xlsx')
-        print(f'All computed data have been exported to {result_path}/all_data.xlsx')
-
-
-    if 'export' in goal:
-
-        provinces = all_raw_data['Provincie'].drop_duplicates().to_list()
-        years = all_raw_data['Jaar'].drop_duplicates().to_list()
-
-        # check if projection results are already available and read them
-        message = """To export all data per province, you first need to compute regression.
-                     To do that, run this code with all of the following settings: 
-                     goal = 'dmc_all'
-                     goal = 'dmi_all'
-                     goal = 'dmc_abiotisch'
-                     goal = 'dmi_abiotisch'"""
-
-        dmc_abiotisch_res_file = f'{result_path}/dmc_abiotisch_results.xlsx'
-        if os.path.isfile(dmc_abiotisch_res_file):
-            dmc_abiotisch_res = pd.read_excel(dmc_abiotisch_res_file)
-        else:
-            raise Exception(message)
-
-        dmi_abiotisch_res_file = f'{result_path}/dmi_abiotisch_results.xlsx'
-        if os.path.isfile(dmi_abiotisch_res_file):
-            dmi_abiotisch_res = pd.read_excel(dmi_abiotisch_res_file)
-        else:
-            raise Exception(message)
-
-        dmc_res_file = f'{result_path}/dmc_all_results.xlsx'
-        if os.path.isfile(dmc_res_file):
-            dmc_res = pd.read_excel(dmc_res_file)
-        else:
-            raise Exception(message)
-
-        dmi_res_file = f'{result_path}/dmi_all_results.xlsx'
-        if os.path.isfile(dmi_res_file):
-            dmi_res = pd.read_excel(dmi_res_file)
-        else:
-            raise Exception(message)
-
-        for province in provinces:
-            print(f'Exporting regression results for {province}')
-
-            # split and export raw data per province
-            raw_prov_data = all_raw_data[all_raw_data['Provincie'] == province]
-            export_path = f'{result_path}/results_per_province/' + province
-
-            if not os.path.exists(export_path):
-                os.makedirs(export_path)
-
-            raw_prov_data.to_excel(export_path + f'/CBS_goederenstatistiek_{province}.xlsx')
-
-            # split and export processed data per province
-            prov_data = all_data[all_data['Provincie'] == province]
-            prov_data = prov_data.drop(columns=['cbs'])
-            prov_data = prov_data[['Provincie', 'Goederengroep', 'Jaar', 'DMI', 'DMC'] + relevant_cols + ['Grondstof']]
-
-            # aggregate all columns per resource_type type per year
-            aggregated = prov_data.groupby(['Grondstof', 'Jaar']).sum(numeric_only=True)
-
-            # split mixed product groups equally between biotic and abiotic
-            for year in years:
-                aggregated.loc['abiotisch', year] += aggregated.loc['gemengd', year] / 2
-                aggregated.loc['biotisch', year] += aggregated.loc['gemengd', year] / 2
-                aggregated.drop(('gemengd', year), inplace=True)
-
-            summed = aggregated.groupby('Jaar').sum(numeric_only=True)
-
-            cols = ['label',  'projected_value', 'lower_bound_0', 'upper_bound_1', 'goal', '2016 value']
-            col_names = ['provincie', 'projectie 2030', 'min 2030', 'max 2030', 'doel 2030', 'referentiejaar 2016']
-
-            # export projection results per province
-            dmc_abiotisch = dmc_abiotisch_res[dmc_abiotisch_res['label'] == province]
-            dmc_abiotisch = dmc_abiotisch[cols]
-            dmc_abiotisch.columns = col_names
-            dmc_abiotisch = dmc_abiotisch.set_index('provincie')
-
-            dmi_abiotisch = dmi_abiotisch_res[dmi_abiotisch_res['label'] == province]
-            dmi_abiotisch = dmi_abiotisch[cols]
-            dmi_abiotisch.columns = col_names
-            dmi_abiotisch = dmi_abiotisch.set_index('provincie')
-
-            dmc = dmc_res[dmc_res['label'] == province]
-            dmc = dmc[cols[:-2]]
-            dmc.columns = col_names[:-2]
-            dmc = dmc.set_index('provincie')
-
-            dmi = dmi_res[dmi_res['label'] == province]
-            dmi = dmi[cols[:-2]]
-            dmi.columns = col_names[:-2]
-            dmi = dmi.set_index('provincie')
-
-            with pd.ExcelWriter(export_path + f'/Ind.1_{province}.xlsx') as writer:
-                summed.to_excel(writer, sheet_name='Totaal')
-                aggregated.to_excel(writer, sheet_name='Gescheiden')
-                dmi.to_excel(writer, sheet_name='DMI')
-                dmc.to_excel(writer, sheet_name='DMC')
-                dmi_abiotisch.to_excel(writer, sheet_name='DMI abiotisch')
-                dmc_abiotisch.to_excel(writer, sheet_name='DMC abiotisch')
-                prov_data.to_excel(writer, sheet_name='Data')
-
-        print(f"Results for all provinces have been exported to {result_path}results_per_province/")
-
-
-
-
+    all_data.to_excel(f'{result_path}/all_data.xlsx')
+    print(f'All computed data have been exported to {result_path}/all_data.xlsx')

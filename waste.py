@@ -100,7 +100,7 @@ viz_data['tag'] = viz_data['current_rank'] + "->" + viz_data["alt_rank"]
 # ______________________________________________________________________________
 
 # create results folder for saving the result files
-result_path = 'results/indicator2/'
+result_path = 'results/waste/'
 if not os.path.exists(result_path):
     os.makedirs(result_path)
     print(f"All results will be saved in the directory {result_path}")

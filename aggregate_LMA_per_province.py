@@ -4,13 +4,8 @@ import pickle
 import time
 import numpy as np
 provinces = gpd.read_file('Spatial_data/provincies.shp')
-lma_path = 'C:\\Users\\Arthur\\Documents\\local\\LMA\\full_data\\ontvangst_2023_full.csv'
-#print(provinces)
-#get = pd.read_csv(lma_path, nrows=500)
+lma_path = '' #LMA ontvangst 2023 was used in this analysis
 
-#print(get['geometry'])
-#for i, row in provinces.iterrows():
-#    print()#for chunk in pd.read_csv(lma_path, chunksize=chunksize):
 
 verwerkingsmethoden = [
     'A01', 'A02',
@@ -23,11 +18,8 @@ verwerkingsmethoden = [
     ]
 
 
-def compile_methods_per_province():
+def compile_methods_per_province(file=''):
     chunksize = 10000
-
-    year = 2023
-    file = f"C:\\Users\\Arthur\\Documents\\local\\LMA\\full_data\\ontvangst_{year}_full.csv"
     data_dict = {}
     for i in range(len(provinces.index)):
         data_dict[provinces['name'].iloc[i]] = {}
@@ -40,8 +32,6 @@ def compile_methods_per_province():
         for ind, prov in provinces.iterrows():
 
             for row_ind, row in chunk[prov['geometry'].contains(chunk['geometry'])].iterrows():
-            # print(row['EuralCode'])
-            # print(row['EuralCode'])
                 if row['EuralCode'] not in data_dict[prov['name']]:
                     data_dict[prov['name']][row['EuralCode']] = {
                         'kg_per_process': np.zeros(31),
