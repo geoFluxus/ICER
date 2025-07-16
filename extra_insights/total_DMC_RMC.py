@@ -70,5 +70,8 @@ def create_short_tables(prov='Limburg'):
     total_abiotic.to_excel(f'../results/{prov}_goederen_tabel.xlsx')
     ta_tables.to_excel(f'../results/{prov}_ta_goederen_tabel.xlsx')
 
+
 if __name__ == '__main__':
-   create_short_tables()
+    #create_short_tables()
+    #biotisch_abiotisch_tables()
+    create_short_tables('Overijssel')
