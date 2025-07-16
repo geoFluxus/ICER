@@ -638,7 +638,7 @@ if __name__ == '__main__':
         'Zeeland': ignore_fossil_groups
     }
     # create results folder for saving the result files
-    result_path = 'results/indicator1/'
+    result_path = 'results/goods_and_raw_materials/'
     if not os.path.exists(result_path):
         os.makedirs(result_path)
         print(f"All results will be saved in the directory {result_path}")
